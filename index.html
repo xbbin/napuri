@@ -204,7 +204,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261020105626'; // 배포할 때마다 바뀐다
+  const BUILD = '20261020105851'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -322,7 +322,7 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.globalCompositeOperation = 'source-over';
       ctx.clearRect(0, 0, W, H);
-      const rx = W * 0.8, ry = heroH * 0.72, cx = W / 2, cy = centerY;
+      const rx = W * 0.7, ry = heroH * 0.63, cx = W / 2, cy = centerY; // 앱(0.8·0.72)보다 조금 작게
       const at = (nx, ny) => [cx + nx * rx, cy + ny * ry];
 
       // 1) 구름 모양
