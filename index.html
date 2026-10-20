@@ -13,6 +13,11 @@
 <meta name="theme-color" content="#0E1625">
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="나풀이">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600&display=swap" rel="stylesheet">
@@ -99,7 +104,33 @@
   .app a { display: inline-block; margin-top: 14px; background: var(--night); color: #fff; text-decoration: none; font-weight: 500; font-size: 14px; padding: 12px 20px; border-radius: 12px; }
   .note { margin-top: 24px; text-align: center; font-size: 12px; line-height: 1.6; color: var(--outline); }
   .msg { text-align: center; padding: 40px 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
-  .loading { opacity: .6; }
+  .link { display: block; margin: 16px auto 0; background: none; border: 0; font: 13px var(--sans); color: var(--outline); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+  /* 처음 한 번: 생년월일 입력 */
+  .field-label { font-size: 13px; color: var(--ink-soft); }
+  .birth { width: 100%; margin-top: 8px; border: 0; border-bottom: 1.5px solid var(--outline-variant); background: none; outline: none;
+           font: 600 26px var(--serif); letter-spacing: 1px; padding: 6px 0 10px; color: var(--ink); border-radius: 0; }
+  .birth:focus { border-bottom-color: var(--gold-fill); }
+  .birth::placeholder { color: var(--container-high); }
+  .hint { margin: 10px 0 0; font-size: 13px; color: var(--outline); line-height: 1.5; }
+  .hint.error { color: #BA1A1A; }
+  .result { display: flex; align-items: center; gap: 16px; margin-top: 22px; }
+  .seal { flex: none; width: 56px; height: 56px; border-radius: 50%; background: rgba(255,223,158,.35); color: var(--gold);
+          display: flex; align-items: center; justify-content: center; font: 24px var(--serif); }
+  .result-title { font: 600 19px var(--serif); letter-spacing: -0.5px; }
+  .note-box { margin-top: 16px; padding: 14px; border-radius: 14px; background: rgba(255,223,158,.25); font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+  .note-box b { display: block; font-weight: 500; color: var(--ink); margin-bottom: 4px; font-size: 14px; }
+  .choices { display: flex; gap: 8px; margin-top: 12px; }
+  .choice { flex: 1; border: 1px solid var(--container-high); background: var(--card); border-radius: 12px; padding: 12px 8px; font: 500 14px var(--sans); color: var(--ink-soft); cursor: pointer; }
+  .choice[aria-pressed="true"] { background: var(--night); border-color: var(--night); color: #fff; }
+  .primary { width: 100%; margin-top: 24px; border: 0; border-radius: 14px; padding: 16px; background: var(--night); color: #fff; font: 500 16px var(--sans); cursor: pointer; }
+  .primary:disabled { background: var(--container-high); color: var(--outline); cursor: default; }
+  .privacy { margin: 14px 0 0; text-align: center; font-size: 12px; color: var(--outline); }
+
+  /* 홈 화면에 추가 안내(아이폰 사파리) */
+  .install { margin-top: 16px; display: flex; gap: 12px; align-items: flex-start; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(31,27,22,.04); font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+  .install b { color: var(--ink); font-weight: 500; }
+  .install button { flex: none; background: none; border: 0; color: var(--outline); font-size: 18px; line-height: 1; padding: 0 2px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -129,6 +160,9 @@
   const BRANCH_HANJA = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
   const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
   const MIN_AGE = 20, MAX_AGE = 89; // 앱 AppConfig.boardMinAge/MaxAge 와 같다
+  // 연도별 입춘 시각(한국 시각) [월, 일, 시, 분]. 배포할 때 앱의 lib/core/ipchun_table.dart 에서 채운다(엔진과 같은 표).
+  const IPCHUN = {"1900":[2,4,14,19],"1901":[2,4,20,7],"1902":[2,5,2,5],"1903":[2,5,7,59],"1904":[2,5,13,51],"1905":[2,4,19,43],"1906":[2,5,1,31],"1907":[2,5,7,26],"1908":[2,5,13,15],"1909":[2,4,19,2],"1910":[2,5,0,57],"1911":[2,5,6,40],"1912":[2,5,12,53],"1913":[2,4,18,42],"1914":[2,5,0,29],"1915":[2,5,6,25],"1916":[2,5,12,13],"1917":[2,4,17,57],"1918":[2,4,23,53],"1919":[2,5,5,39],"1920":[2,5,11,26],"1921":[2,4,17,20],"1922":[2,4,23,6],"1923":[2,5,5,0],"1924":[2,5,10,49],"1925":[2,4,16,36],"1926":[2,4,22,38],"1927":[2,5,4,29],"1928":[2,5,10,16],"1929":[2,4,16,8],"1930":[2,4,21,51],"1931":[2,5,3,40],"1932":[2,5,9,29],"1933":[2,4,15,9],"1934":[2,4,21,3],"1935":[2,5,2,48],"1936":[2,5,8,29],"1937":[2,4,14,25],"1938":[2,4,20,14],"1939":[2,5,2,10],"1940":[2,5,8,7],"1941":[2,4,13,49],"1942":[2,4,19,48],"1943":[2,5,1,40],"1944":[2,5,7,22],"1945":[2,4,13,19],"1946":[2,4,19,3],"1947":[2,5,0,50],"1948":[2,5,6,41],"1949":[2,4,12,22],"1950":[2,4,18,20],"1951":[2,5,0,13],"1952":[2,5,5,52],"1953":[2,4,11,45],"1954":[2,4,17,30],"1955":[2,4,22,47],"1956":[2,5,4,41],"1957":[2,4,10,24],"1958":[2,4,16,19],"1959":[2,4,22,12],"1960":[2,5,3,53],"1961":[2,4,9,52],"1962":[2,4,16,17],"1963":[2,4,22,7],"1964":[2,5,4,4],"1965":[2,4,9,46],"1966":[2,4,15,37],"1967":[2,4,21,30],"1968":[2,5,3,7],"1969":[2,4,8,58],"1970":[2,4,14,45],"1971":[2,4,20,25],"1972":[2,5,2,20],"1973":[2,4,8,4],"1974":[2,4,14,0],"1975":[2,4,19,59],"1976":[2,5,1,39],"1977":[2,4,7,33],"1978":[2,4,13,26],"1979":[2,4,19,12],"1980":[2,5,1,9],"1981":[2,4,6,55],"1982":[2,4,12,45],"1983":[2,4,18,39],"1984":[2,5,0,18],"1985":[2,4,6,11],"1986":[2,4,12,7],"1987":[2,4,17,51],"1988":[2,4,23,42],"1989":[2,4,5,27],"1990":[2,4,11,13],"1991":[2,4,17,8],"1992":[2,4,22,48],"1993":[2,4,4,37],"1994":[2,4,10,30],"1995":[2,4,16,12],"1996":[2,4,22,7],"1997":[2,4,4,1],"1998":[2,4,9,56],"1999":[2,4,15,56],"2000":[2,4,21,40],"2001":[2,4,3,28],"2002":[2,4,9,23],"2003":[2,4,15,5],"2004":[2,4,20,56],"2005":[2,4,2,42],"2006":[2,4,8,27],"2007":[2,4,14,18],"2008":[2,4,20,0],"2009":[2,4,1,49],"2010":[2,4,7,47],"2011":[2,4,13,32],"2012":[2,4,19,22],"2013":[2,4,1,13],"2014":[2,4,7,3],"2015":[2,4,12,58],"2016":[2,4,18,45],"2017":[2,4,0,33],"2018":[2,4,6,28],"2019":[2,4,12,14],"2020":[2,4,18,3],"2021":[2,3,23,58],"2022":[2,4,5,50],"2023":[2,4,11,42],"2024":[2,4,17,26],"2025":[2,3,23,10],"2026":[2,4,5,1],"2027":[2,4,10,46],"2028":[2,4,16,30],"2029":[2,3,22,20],"2030":[2,4,4,8],"2031":[2,4,9,58],"2032":[2,4,15,48],"2033":[2,3,21,41],"2034":[2,4,3,40],"2035":[2,4,9,31],"2036":[2,4,15,19],"2037":[2,3,21,11],"2038":[2,4,3,3],"2039":[2,4,8,52],"2040":[2,4,14,39],"2041":[2,3,20,24],"2042":[2,4,2,12],"2043":[2,4,7,58],"2044":[2,4,13,43],"2045":[2,3,19,35],"2046":[2,4,1,30],"2047":[2,4,7,17],"2048":[2,4,13,3],"2049":[2,3,18,52],"2050":[2,4,0,43],"2051":[2,4,6,35],"2052":[2,4,12,22],"2053":[2,3,18,12],"2054":[2,4,0,7],"2055":[2,4,5,55],"2056":[2,4,11,46],"2057":[2,3,17,41],"2058":[2,3,23,33],"2059":[2,4,5,23],"2060":[2,4,11,7],"2061":[2,3,16,53],"2062":[2,3,22,46],"2063":[2,4,4,30],"2064":[2,4,10,14],"2065":[2,3,16,2],"2066":[2,3,21,48],"2067":[2,4,3,36],"2068":[2,4,9,28],"2069":[2,3,15,20],"2070":[2,3,21,21],"2071":[2,4,3,10],"2072":[2,4,8,56],"2073":[2,3,14,51],"2074":[2,3,20,40],"2075":[2,4,2,29],"2076":[2,4,8,19],"2077":[2,3,14,2],"2078":[2,3,19,56],"2079":[2,4,1,42],"2080":[2,4,7,27],"2081":[2,3,13,25],"2082":[2,3,19,11],"2083":[2,4,0,57],"2084":[2,4,6,45],"2085":[2,3,12,29],"2086":[2,3,18,25],"2087":[2,4,0,14],"2088":[2,4,5,57],"2089":[2,3,11,53],"2090":[2,3,17,41],"2091":[2,3,23,29],"2092":[2,4,5,27],"2093":[2,3,11,17],"2094":[2,3,17,16],"2095":[2,3,23,6],"2096":[2,4,4,45],"2097":[2,3,10,41],"2098":[2,3,16,28],"2099":[2,3,22,8],"2100":[2,4,3,59]};
+  const STORE = 'napuri_profile'; // 이 기기에만 저장: { birth: 'YYYY-MM-DD', year: 띠 기준 연도 }
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -145,6 +179,7 @@
     const i = ((days + 54) % 60 + 60) % 60;
     return [STEMS[i % 10] + BRANCHES[i % 12], STEM_HANJA[i % 10] + BRANCH_HANJA[i % 12]];
   }
+  const yearPillar = (y) => STEMS[((y - 4) % 10 + 10) % 10] + BRANCHES[((y - 4) % 12 + 12) % 12];
   function ganjiHanja(name) {
     if (!name || name.length !== 2) return '';
     const s = STEMS.indexOf(name[0]), b = BRANCHES.indexOf(name[1]);
@@ -170,7 +205,10 @@
   const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('d') || '');
   const day = dm ? [+dm[1], +dm[2], +dm[3]] : kstToday();
   const ymd = day.map((n, i) => i ? String(n).padStart(2, '0') : n).join('-');
-  const myYear = /^\d{4}$/.test(params.get('y') || '') ? +params.get('y') : null;
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE)); } catch { return null; } })();
+  const shared = params.has('d') || params.has('y'); // 남이 보낸 링크
+  const myYear = /^\d{4}$/.test(params.get('y') || '') ? +params.get('y') : (!shared && saved ? saved.year : null);
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
   const [pillar, pillarHanja] = dayPillar(day);
   const weekday = WEEK[new Date(Date.UTC(day[0], day[1] - 1, day[2])).getUTCDay()];
   const dateLabel = `${day[1]}월 ${day[2]}일 ${weekday}요일`;
@@ -194,6 +232,7 @@
     if (!rows.length) {
       $('quote').textContent = '이 날의 운세가 아직 없어요.';
       main.innerHTML = `<p class="msg">운세는 매일 새벽에 만들어져요.<br>조금 뒤에 다시 열어 주세요.</p>${footer()}`;
+      bindFooter();
       return;
     }
     let html = '';
@@ -210,6 +249,8 @@
         ${bar('건강운', '健康運', mine.health, 'var(--health)')}
         ${bar('애정운', '愛情運', mine.love, 'var(--love)')}
       </div>`;
+    } else if (myYear) {
+      $('quote').textContent = '이 연령대의 운세는 준비 중이에요.';
     } else {
       $('quote').textContent = `${dateLabel}, 12띠 운세`;
       document.title = `${dateLabel} 12띠 운세 · 나풀이`;
@@ -228,8 +269,9 @@
         <div class="chips" role="group">${order.map((a) => `<button class="chip" data-a="${a}" aria-pressed="${a === start}">${a}</button>`).join('')}</div>
         <div class="detail card" id="detail"></div>`;
     }
-    html += footer();
+    html += installHint() + footer();
     main.innerHTML = html;
+    bindFooter();
 
     const show = (animal) => {
       const list = board[animal];
@@ -250,16 +292,109 @@
   }
 
   function footer() {
+    const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+    // 내 운세 화면: 생년월일 바꾸기만
+    if (!shared && saved) return `<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
     const play = PLAY_URL && !PLAY_URL.startsWith('__')
-      ? `<a href="${PLAY_URL}">Google Play에서 받기</a>` : '';
-    return `<div class="app"><img src="icon.png" alt=""><p>매일 아침, 내 생년월일에 맞춘 운세를<br>나풀이 앱에서 받아 보세요.</p>${play}</div>
-      <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+      ? `<a href="${PLAY_URL}" style="background:none;color:var(--ink-soft);text-decoration:underline;padding:8px">Android 앱 받기</a>` : '';
+    return `<div class="app"><img src="icon.png" alt=""><p>내 생년월일에 맞춘 운세를<br>매일 아침 나풀이에서 받아 보세요.</p>
+      <a href="./">${saved ? '내 운세 보기' : '내 운세 보러 가기'}</a><br>${play}</div>${note}`;
   }
 
-  load().then(render).catch(() => {
-    $('meta').textContent = dateLabel;
-    $('quote').textContent = '운세를 불러오지 못했어요.';
-    $('main').innerHTML = `<p class="msg">인터넷 연결을 확인한 뒤<br>다시 열어 주세요.</p>${footer()}`;
+  // 아이폰 사파리에서 처음 몇 번: 홈 화면에 추가하면 앱처럼 쓸 수 있다고 알려 준다
+  function installHint() {
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    let off = false; try { off = localStorage.getItem('napuri_install_hint') === 'off'; } catch {}
+    if (!ios || standalone || shared || off) return '';
+    return `<div class="install" id="install"><div><b>홈 화면에 추가해 두세요</b><br>사파리 아래 <b>공유 버튼</b> → <b>홈 화면에 추가</b>를 누르면
+      앱처럼 아이콘으로 바로 열려요.</div><button aria-label="닫기" id="install-close">✕</button></div>`;
+  }
+
+  function bindFooter() {
+    $('reset')?.addEventListener('click', () => { try { localStorage.removeItem(STORE); } catch {} location.replace('./'); });
+    $('install-close')?.addEventListener('click', () => {
+      try { localStorage.setItem('napuri_install_hint', 'off'); } catch {}
+      $('install').remove();
+    });
+  }
+
+  // ---------- 처음 한 번: 생년월일 입력 ----------
+  function resolveYear(y, m, d) {
+    const ip = IPCHUN[y];
+    if (!ip) return { year: y };
+    const [im, id, ih, imin] = ip;
+    if (m < im || (m === im && d < id)) return { year: y - 1, before: true };
+    if (m > im || d > id) return { year: y };
+    return { needsTime: true, time: `${im}월 ${id}일 ${ih}시 ${imin}분` }; // 입춘 당일
+  }
+
+  function setup() {
+    $('quote').textContent = '태어난 날을 알려주세요';
+    $('meta').textContent = '띠와 나이에 맞춘 오늘의 운세를 보여 드려요';
+    document.title = '나풀이 · 내 운세';
+    $('main').innerHTML = `<div class="card">
+        <label class="field-label" for="birth">생년월일 (양력)</label>
+        <input class="birth" id="birth" inputmode="numeric" autocomplete="bday" placeholder="1990. 01. 01">
+        <p class="hint" id="hint">숫자 8자리로 적어 주세요. 예) 19920715</p>
+        <div id="result"></div>
+        <button class="primary" id="save" disabled>내 운세 보기</button>
+        <p class="privacy">생년월일은 이 기기에만 저장되고, 서버로 보내지 않아요.</p>
+      </div>${installHint()}<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+    bindFooter();
+    const input = $('birth'), hint = $('hint'), result = $('result'), save = $('save');
+    let chosen = null, birth = null;
+
+    const showResult = (year, before) => {
+      const animal = ANIMALS[((year - 1984) % 12 + 12) % 12];
+      const p = yearPillar(year);
+      return `<div class="result"><div class="seal">${BRANCH_HANJA[ANIMALS.indexOf(animal)]}</div>
+        <div><div class="result-title">${year}년생 ${animal}띠</div><div class="caption">${p}년 <span class="hanja-s">${ganjiHanja(p)}</span></div></div></div>
+        ${before ? `<div class="note-box"><b>입춘 전에 태어나 전년도 띠로 봐요</b>명리학에서는 1월 1일이 아니라 입춘(2월 4일 무렵)에 해가 바뀌어요.</div>` : ''}`;
+    };
+
+    input.addEventListener('input', () => {
+      const digits = input.value.replace(/\D/g, '').slice(0, 8);
+      input.value = digits.slice(0, 4) + (digits.length > 4 ? '. ' + digits.slice(4, 6) : '') + (digits.length > 6 ? '. ' + digits.slice(6) : '');
+      chosen = birth = null; result.innerHTML = ''; save.disabled = true;
+      hint.className = 'hint'; hint.textContent = '숫자 8자리로 적어 주세요. 예) 19920715';
+      if (digits.length < 8) return;
+      const y = +digits.slice(0, 4), m = +digits.slice(4, 6), d = +digits.slice(6);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      const [ty, tm, td] = kstToday();
+      if (dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) { hint.className = 'hint error'; hint.textContent = '없는 날짜예요'; return; }
+      if (y < 1900 || dt > Date.UTC(ty, tm - 1, td)) { hint.className = 'hint error'; hint.textContent = '1900년부터 오늘까지의 날짜를 입력해 주세요'; return; }
+      hint.textContent = '';
+      birth = digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6);
+      const r = resolveYear(y, m, d);
+      if (!r.needsTime) { chosen = r.year; result.innerHTML = showResult(r.year, r.before); save.disabled = false; return; }
+      // 입춘 당일: 태어난 시각이 입춘 전인지 후인지 고른다
+      result.innerHTML = `<div class="note-box"><b>입춘 당일에 태어나셨네요</b>그해 입춘은 ${r.time}이에요. 태어난 시각에 따라 띠가 달라져요.
+        <div class="choices"><button class="choice" data-y="${y - 1}">입춘 전</button><button class="choice" data-y="${y}">입춘 후</button></div></div><div id="picked"></div>`;
+      result.querySelectorAll('.choice').forEach((b) => b.addEventListener('click', () => {
+        result.querySelectorAll('.choice').forEach((c) => c.setAttribute('aria-pressed', c === b));
+        chosen = +b.dataset.y; $('picked').innerHTML = showResult(chosen, false); save.disabled = false;
+      }));
+    });
+    save.addEventListener('click', () => {
+      if (!chosen) return;
+      try { localStorage.setItem(STORE, JSON.stringify({ birth, year: chosen })); } catch {}
+      location.replace('./');
+    });
+  }
+
+  if (!shared && !saved) {
+    setup();
+  } else {
+    load().then(render).catch(() => {
+      $('meta').textContent = dateLabel;
+      $('quote').textContent = '운세를 불러오지 못했어요.';
+      $('main').innerHTML = `<p class="msg">인터넷 연결을 확인한 뒤<br>다시 열어 주세요.</p>${footer()}`;
+      bindFooter();
+    });
+  }
+  // 홈 화면 아이콘으로 띄워 둔 채 날짜가 바뀌면(다음 날 아침) 오늘 운세로 새로 고친다
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !params.has('d') && kstToday().join() !== day.join()) location.reload();
   });
 </script>
 </body>

@@ -1,0 +1,18 @@
+{
+  "name": "나풀이",
+  "short_name": "나풀이",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FDF9F1",
+  "theme_color": "#0E1625",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
