@@ -108,7 +108,6 @@
   .year.me { background: linear-gradient(90deg, rgba(255,223,158,.35), rgba(255,223,158,0)); margin: 0 -12px; padding: 12px; border-radius: 12px; border-bottom-color: transparent; }
   .year-label { flex: none; width: 52px; font-size: 13px; color: var(--outline); padding-top: 2px; }
   .year-text { font-size: 15px; line-height: 1.5; }
-  .year-score { flex: none; font-size: 13px; color: var(--ink-soft); padding-top: 2px; font-variant-numeric: tabular-nums; }
 
   .app { margin-top: 36px; text-align: center; background: var(--container); border-radius: 20px; padding: 24px 20px; }
   .app img { width: 56px; height: 56px; border-radius: 14px; }
@@ -350,7 +349,7 @@
       $('detail').innerHTML = `<div class="detail-head"><span class="label">${animal}띠</span><span class="spacer"></span>
           <span class="avg-label">평균</span><span class="avg">${avg(list.map((r) => r.total))}</span><span class="unit">점</span></div>
         ${list.map((r) => `<div class="year${r.birth_year === myYear ? ' me' : ''}"><span class="year-label">${twoDigit(r.birth_year)}</span>
-          <span class="year-text">${esc(r.text)}</span><span class="year-score">${r.total}</span></div>`).join('')}`;
+          <span class="year-text">${esc(r.text)}</span></div>`).join('')}`;
     };
     document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => show(c.dataset.a)));
     $('copy-all')?.addEventListener('click', () => copy(boardText(board, order), '12띠 운세를 복사했어요. 원하는 곳에 붙여 넣어 보세요.'));
