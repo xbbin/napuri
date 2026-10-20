@@ -35,7 +35,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--sans); letter-spacing: -0.2px; }
   body { -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: anywhere; }
-  .page { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; }
+  .page { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; overflow: clip; } /* clip: 포커스·스크롤로 옆으로 밀리지 않게 */
 
   /* 밤하늘 히어로: 달빛 오로라(앱 기본 테마) */
   .hero { position: relative; padding: calc(env(safe-area-inset-top) + 20px) 0 0; color: #FFFFFF; }
@@ -82,6 +82,13 @@
   .fill { height: 100%; border-radius: 3px; }
 
   h2 { font-family: var(--serif); font-weight: 600; font-size: 18px; letter-spacing: -0.7px; margin: 36px 0 12px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 36px 0 12px; }
+  .section-head h2 { margin: 0; }
+  .copy-all { background: none; border: 0; padding: 4px 0; font: 500 14px var(--sans); color: var(--gold); cursor: pointer; }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translate(-50%, 20px); opacity: 0;
+           background: var(--night); color: #fff; font-size: 14px; padding: 12px 18px; border-radius: 12px; transition: .25s; pointer-events: none;
+           width: max-content; max-width: calc(100% - 32px); text-align: center; z-index: 10; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
   .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; border: 1px solid var(--container-high); background: var(--card); color: var(--ink-soft);
@@ -265,7 +272,7 @@
     const order = ANIMALS.filter((a) => board[a]);
     if (order.length) {
       const start = mine && board[mine.animal] ? mine.animal : order[0];
-      html += `<h2>${mine ? '다른 띠 운세' : '띠별 운세'}</h2>
+      html += `<div class="section-head"><h2>${mine ? '다른 띠 운세' : '띠별 운세'}</h2><button class="copy-all" id="copy-all">12띠 전체 복사</button></div>
         <div class="chips" role="group">${order.map((a) => `<button class="chip" data-a="${a}" aria-pressed="${a === start}">${a}</button>`).join('')}</div>
         <div class="detail card" id="detail"></div>`;
     }
@@ -282,6 +289,7 @@
           <span class="year-text">${esc(r.text)}</span><span class="year-score">${r.total}</span></div>`).join('')}`;
     };
     document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => show(c.dataset.a)));
+    $('copy-all')?.addEventListener('click', () => copy(boardText(board, order), '12띠 운세를 복사했어요. 원하는 곳에 붙여 넣어 보세요.'));
     if (order.length) {
       const chip = document.querySelector('.chip[aria-pressed="true"]');
       show(chip.dataset.a);
@@ -289,6 +297,35 @@
       const row = chip.parentElement;
       row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
     }
+  }
+
+  // 12띠 전체 복사 글: 앱의 boardAsText 와 같은 신문 띠운세 모양
+  function boardText(board, order) {
+    const sections = order.map((a) => `〈${a}띠〉 운세지수 ${avg(board[a].map((r) => r.total))}점\n`
+      + board[a].map((r) => `${twoDigit(r.birth_year)} ${r.text}`).join(' '));
+    return `[나풀이] ${dateLabel} 12띠 운세 (${pillar}일)\n\n${sections.join('\n\n')}\n\n`
+      + `나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.\n${location.origin}${location.pathname}?d=${ymd}`;
+  }
+
+  async function copy(text, done) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // 클립보드 API 가 막힌 브라우저용
+      const t = document.createElement('textarea');
+      t.value = text; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+    }
+    toast(done);
+  }
+
+  function toast(text) {
+    let el = document.querySelector('.toast');
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = text;
+    requestAnimationFrame(() => el.classList.add('show'));
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
   function footer() {
