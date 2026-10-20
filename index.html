@@ -39,21 +39,8 @@
 
   /* 밤하늘 히어로: 달빛 오로라(앱 기본 테마) */
   .hero { position: relative; padding: calc(env(safe-area-inset-top) + 20px) 0 0; color: #FFFFFF; }
-  .sky { position: absolute; left: -30%; right: -30%; top: -14%; height: 128%; z-index: 0; pointer-events: none;
-         border-radius: 50%; overflow: hidden;
-         background: radial-gradient(ellipse at 50% 50%, #111A29 0%, #0E1625 45%, #090E18 70%);
-         -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
-                 mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); }
-  .band { position: absolute; border-radius: 50%; filter: blur(34px); mix-blend-mode: screen; opacity: .95; }
-  .b1 { width: 85%; height: 30%; left: 2%; top: 42%; background: rgba(51,112,140,.55); transform: rotate(-14deg); animation: drift1 30s ease-in-out infinite alternate; }
-  .b2 { width: 90%; height: 24%; left: 22%; top: 60%; background: rgba(78,76,138,.5); transform: rotate(6deg); animation: drift2 30s ease-in-out infinite alternate; }
-  .b3 { width: 60%; height: 26%; left: 35%; top: 30%; background: rgba(120,143,168,.32); transform: rotate(20deg); animation: drift3 30s ease-in-out infinite alternate; }
-  @keyframes drift1 { to { transform: translate(6%, -4%) rotate(-6deg) scale(1.08); } }
-  @keyframes drift2 { to { transform: translate(-8%, 3%) rotate(12deg) scale(.95); } }
-  @keyframes drift3 { to { transform: translate(-4%, 6%) rotate(28deg) scale(1.1); } }
-  .star { position: absolute; border-radius: 50%; background: #DDE6F2; animation: twinkle 4s ease-in-out infinite alternate; }
-  @keyframes twinkle { from { opacity: .25; } to { opacity: .95; } }
-  @media (prefers-reduced-motion: reduce) { .band, .star { animation: none; } }
+  /* 오로라 캔버스: 히어로보다 아래로 넉넉히 번지고, 그 위로 카드가 올라온다 */
+  .sky { position: absolute; left: 0; top: 0; width: 100%; z-index: 0; pointer-events: none; }
 
   .top { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 6px; padding: 0 20px; }
   .logo { font-family: var(--serif); font-weight: 600; font-size: 20px; letter-spacing: -0.5px; color: #FFFFFF; text-shadow: 0 1px 6px rgba(0,0,0,.35); }
@@ -196,7 +183,7 @@
 <body>
 <div class="page">
   <section class="hero">
-    <div class="sky" id="sky"><div class="band b1"></div><div class="band b2"></div><div class="band b3"></div></div>
+    <canvas class="sky" id="sky" aria-hidden="true"></canvas>
     <div class="top"><span class="logo">나풀이</span><span class="logo-hanja">命理</span></div>
     <div class="quote-wrap">
       <div class="mark" id="mark-open" hidden>“</div>
@@ -217,7 +204,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261020105003'; // 배포할 때마다 바뀐다
+  const BUILD = '20261020105626'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -264,18 +251,132 @@
     return s < 0 || b < 0 ? '' : STEM_HANJA[s] + BRANCH_HANJA[b];
   }
 
-  // 별: 매번 같은 자리에 반짝이도록 고정 난수
-  (function stars() {
-    let seed = 7;
+  // ---------- 오로라: 앱 AuroraPainter(lib/ui/aurora.dart, 달빛 테마)를 캔버스로 옮긴 것 ----------
+  // 둥근 남색 구름(둘레 원 다섯 개가 천천히 돌아 테두리가 일렁임) 안에만 하늘 그라데이션·빛 띠·별·입자를 칠한다.
+  // 앱의 MaskFilter.blur 는 브라우저마다 지원이 달라, 같은 번짐을 방사형 그라데이션으로 낸다.
+  (function aurora() {
+    const MOON = {
+      cloud: [17, 26, 41], sky: ['#090E18', '#0E1625', '#111A29'], starGold: '#DDE6F2', bandBlur: 0.3,
+      // (중심 x, 중심 y, 가로 반경, 세로 반경, 기울기, 색 rgba, 흔들림 위상)
+      bands: [[-0.40, 0.05, 0.85, 0.26, -0.25, [51, 112, 140, 0x66 / 255], 0.0],
+              [0.15, 0.40, 0.90, 0.20, 0.10, [78, 76, 138, 0x5C / 255], 2.1],
+              [0.30, -0.15, 0.60, 0.22, 0.35, [120, 143, 168, 0x40 / 255], 4.2]],
+    };
+    const TAU = Math.PI * 2, PERIOD = 30000; // 한 바퀴 30초
+    let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const sky = $('sky');
-    for (let i = 0; i < 26; i++) {
-      const s = document.createElement('i');
-      const size = 1 + rnd() * 1.8;
-      s.className = 'star';
-      s.style.cssText = `width:${size}px;height:${size}px;left:${22 + rnd() * 56}%;top:${30 + rnd() * 50}%;animation-delay:${-rnd() * 4}s;`;
-      sky.appendChild(s);
+    const stars = Array.from({ length: 28 }, (_, i) => ({
+      x: (rnd() * 2 - 1) * 0.85, y: (rnd() * 2 - 1) * 0.8, r: 0.5 + rnd() * (i % 7 === 0 ? 1.6 : 0.9),
+      speed: 2 + Math.floor(rnd() * 5), phase: rnd() * TAU, gold: i % 4 === 0, sparkle: i % 7 === 0,
+    }));
+
+    const canvas = $('sky'), hero = document.querySelector('.hero'), ctx = canvas.getContext('2d');
+    let W = 0, H = 0, heroH = 0, centerY = 0, dpr = 1, grain = null;
+
+    // 흐린 타원 하나: 가장자리가 번진 방사형 그라데이션(시그마 = 흐림 정도)
+    function softOval(cx, cy, a, b, rot, [r, g, bl, alpha], sigma) {
+      const A = a + 2 * sigma, B = b + 2 * sigma, m = (a / A + b / B) / 2, k = Math.max(0.02, (1 - m) / 4);
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(A, B);
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      for (let u = 0; u <= 1.0001; u += 0.1) {
+        const f = 1 / (1 + Math.exp((u - m) / k)), f0 = 1 / (1 + Math.exp(-m / k));
+        grad.addColorStop(Math.min(u, 1), `rgba(${r},${g},${bl},${(alpha * f / f0).toFixed(4)})`);
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.fill();
+      ctx.restore();
     }
+
+    // 크게 흐린 타원(빛 띠·별 번짐): 실제 흐림처럼 넓게 퍼진 만큼 가운데가 옅어지는 가우스 모양(빛의 양은 그대로)
+    function blur(cx, cy, a, b, rot, [r, g, bl, alpha], sigma) {
+      const gx = Math.sqrt(a * a / 4 + sigma * sigma), gy = Math.sqrt(b * b / 4 + sigma * sigma);
+      const peak = alpha * Math.min(1, (a * b) / (2 * gx * gy));
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(3 * gx, 3 * gy);
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      for (let i = 0; i <= 10; i++) grad.addColorStop(i / 10, `rgba(${r},${g},${bl},${(peak * Math.exp(-((3 * i / 10) ** 2) / 2)).toFixed(4)})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(0, 0, 1, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+
+    function resize() {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      heroH = hero.offsetHeight;
+      W = hero.offsetWidth; H = Math.round(heroH * 1.9); // 아래로 번지는 부분까지(카드 뒤로 들어간다)
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.height = H + 'px';
+      // 구름 중심: 운세 문장 상자 가운데
+      const q = document.querySelector('.quote-wrap');
+      centerY = q ? q.offsetTop + q.offsetHeight * 0.42 : heroH * 0.5;
+      // 필름 입자(크기가 바뀔 때만 새로 만든다)
+      grain = document.createElement('canvas');
+      grain.width = canvas.width; grain.height = canvas.height;
+      const g = grain.getContext('2d'); g.fillStyle = 'rgba(255,255,255,0.07)';
+      let s2 = 7; const r2 = () => (s2 = (s2 * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < W * H / 120; i++) g.fillRect(Math.floor(r2() * grain.width), Math.floor(r2() * grain.height), dpr, dpr);
+    }
+
+    function paint(t) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, W, H);
+      const rx = W * 0.8, ry = heroH * 0.72, cx = W / 2, cy = centerY;
+      const at = (nx, ny) => [cx + nx * rx, cy + ny * ry];
+
+      // 1) 구름 모양
+      softOval(cx, cy, rx * 0.9, ry * 0.9, 0, [...MOON.cloud, 1], ry * 0.08);
+      for (let k = 0; k < 5; k++) {
+        const angle = k * TAU / 5 + 0.5 * Math.sin(t + k * 1.3);
+        const dist = 0.5 + 0.1 * Math.sin(2 * t + k * 2.0);
+        const r = 0.46 + 0.08 * Math.cos(t + k * 0.9);
+        const [x, y] = at(Math.cos(angle) * dist, Math.sin(angle) * dist);
+        softOval(x, y, rx * r, ry * r, 0, [...MOON.cloud, 1], ry * 0.08);
+      }
+
+      // 2) 구름 안쪽만: 하늘 그라데이션 + 빛 띠 + 별 + 입자
+      ctx.globalCompositeOperation = 'source-atop';
+      const sky = ctx.createLinearGradient(0, -heroH, 0, heroH * 2); // 앱처럼 위젯 높이의 -1~2배 구간
+      MOON.sky.forEach((c, i) => sky.addColorStop(i / 2, c));
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+      for (const [bx, by, brx, bry, tilt, color, phase] of MOON.bands) {
+        const [x, y] = at(bx + 0.12 * Math.sin(t + phase), by + 0.10 * Math.cos(t * 2 + phase));
+        blur(x, y, rx * brx, ry * bry, tilt + 0.15 * Math.sin(t + phase), color, rx * MOON.bandBlur);
+      }
+      for (const st of stars) {
+        const [x, y] = at(st.x, st.y);
+        const sparkle = st.sparkle && !(Math.abs(st.x) < 0.5 && st.y > -0.6 && st.y < 0.5); // 글자 위에서는 작은 점으로
+        const tw = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * st.speed + st.phase));
+        const rgb = st.gold ? [221, 230, 242] : [255, 255, 255];
+        blur(x, y, st.r * (sparkle ? 5 : 3), st.r * (sparkle ? 5 : 3), 0, [...rgb, 0.18 * tw], st.r * (sparkle ? 3 : 2));
+        ctx.fillStyle = `rgba(${rgb},${0.9 * tw})`;
+        ctx.beginPath(); ctx.arc(x, y, st.r, 0, TAU); ctx.fill();
+        if (sparkle) {
+          const len = st.r * 7 * (0.8 + 0.2 * tw);
+          ctx.lineWidth = 0.8; ctx.lineCap = 'round';
+          for (const [dx, dy] of [[len, 0], [0, len]]) {
+            const g = ctx.createLinearGradient(x - dx, y - dy, x + dx, y + dy);
+            g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(0.5, `rgba(${rgb},${0.85 * tw})`); g.addColorStop(1, `rgba(${rgb},0)`);
+            ctx.strokeStyle = g;
+            ctx.beginPath(); ctx.moveTo(x - dx, y - dy); ctx.lineTo(x + dx, y + dy); ctx.stroke();
+          }
+        }
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(grain, 0, 0);
+    }
+
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const start = performance.now();
+    function frame(now) {
+      if (!canvas.offsetParent) return requestAnimationFrame(frame); // 달력 탭에서는 쉰다
+      paint(still ? 0 : ((now - start) % PERIOD) / PERIOD * TAU);
+      if (!still) requestAnimationFrame(frame);
+    }
+    resize();
+    new ResizeObserver(() => { resize(); if (still) paint(0); }).observe(hero);
+    requestAnimationFrame(frame);
   })();
 
   // 주소: ?d=2026-10-20&y=1992 (y 가 없으면 그날 12띠 운세)
