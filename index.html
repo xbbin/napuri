@@ -217,6 +217,19 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
+  const BUILD = '20261020105003'; // 배포할 때마다 바뀐다
+
+  // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
+  // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
+  fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+    .then((r) => r.json())
+    .then(({ build }) => {
+      if (!build || build === BUILD) return;
+      const key = 'napuri_reloaded_' + build;
+      try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch { return; }
+      fetch(location.pathname, { cache: 'reload' }).finally(() => location.reload());
+    })
+    .catch(() => {});
 
   const ANIMALS = ['쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양', '원숭이', '닭', '개', '돼지'];
   const STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
