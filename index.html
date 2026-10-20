@@ -204,7 +204,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261020110100'; // 배포할 때마다 바뀐다
+  const BUILD = '20261020110749'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -526,7 +526,7 @@
   }
 
   function footer() {
-    const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+    const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     // 내 운세 화면: 생년월일 바꾸기만
     if (!shared && saved) return `<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
     const play = PLAY_URL && !PLAY_URL.startsWith('__')
@@ -573,7 +573,7 @@
         <div id="result"></div>
         <button class="primary" id="save" disabled>내 운세 보기</button>
         <p class="privacy">생년월일은 이 기기에만 저장되고, 서버로 보내지 않아요.</p>
-      </div>${installHint()}<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+      </div>${installHint()}<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     bindFooter();
     const input = $('birth'), hint = $('hint'), result = $('result'), save = $('save');
     let chosen = null, birth = null;
@@ -707,7 +707,7 @@
             <span><i style="box-shadow:inset 0 0 0 1.2px var(--gold-fill)"></i>오늘</span><span>${icon.lock.replace('<svg', '<svg style="width:12px;height:12px;stroke:var(--outline);fill:none;stroke-width:2"')}미래 잠금</span></div>
         </div>
         ${detail}
-        <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.</p>
+        <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a></p>
       </div>`;
     const go = (delta) => { const t = new Date(Date.UTC(y, m - 1 + delta, 1)); cal.month = [t.getUTCFullYear(), t.getUTCMonth() + 1]; cal.selected = null; showCalendar(); };
     $('prev').addEventListener('click', () => go(-1));
