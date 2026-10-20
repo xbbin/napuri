@@ -39,7 +39,7 @@
 
   /* 밤하늘 히어로: 달빛 오로라(앱 기본 테마) */
   .hero { position: relative; padding: calc(env(safe-area-inset-top) + 20px) 0 0; color: #FFFFFF; }
-  .sky { position: absolute; left: -30%; right: -30%; top: -40%; height: 135%; z-index: 0; pointer-events: none;
+  .sky { position: absolute; left: -30%; right: -30%; top: -14%; height: 128%; z-index: 0; pointer-events: none;
          border-radius: 50%; overflow: hidden;
          background: radial-gradient(ellipse at 50% 50%, #111A29 0%, #0E1625 45%, #090E18 70%);
          -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
@@ -85,6 +85,11 @@
   .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 36px 0 12px; }
   .section-head h2 { margin: 0; }
   .copy-all { background: none; border: 0; padding: 4px 0; font: 500 14px var(--sans); color: var(--gold); cursor: pointer; }
+  .head-actions { display: flex; align-items: baseline; gap: 6px; color: var(--outline-variant); font-size: 12px; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .action { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; padding: 13px 8px;
+            background: var(--card); box-shadow: 0 2px 8px rgba(31,27,22,.04); font: 500 14px var(--sans); color: var(--ink); cursor: pointer; }
+  .action svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translate(-50%, 20px); opacity: 0;
            background: var(--night); color: #fff; font-size: 14px; padding: 12px 18px; border-radius: 12px; transition: .25s; pointer-events: none;
            width: max-content; max-width: calc(100% - 32px); text-align: center; z-index: 10; }
@@ -255,6 +260,10 @@
         ${bar('금전운', '財物運', mine.money, 'var(--gold-fill)')}
         ${bar('건강운', '健康運', mine.health, 'var(--health)')}
         ${bar('애정운', '愛情運', mine.love, 'var(--love)')}
+      </div>
+      <div class="actions">
+        <button class="action" id="copy-mine"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>복사하기</button>
+        <button class="action" id="share-mine"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>공유하기</button>
       </div>`;
     } else if (myYear) {
       $('quote').textContent = '이 연령대의 운세는 준비 중이에요.';
@@ -272,7 +281,7 @@
     const order = ANIMALS.filter((a) => board[a]);
     if (order.length) {
       const start = mine && board[mine.animal] ? mine.animal : order[0];
-      html += `<div class="section-head"><h2>${mine ? '다른 띠 운세' : '띠별 운세'}</h2><button class="copy-all" id="copy-all">12띠 전체 복사</button></div>
+      html += `<div class="section-head"><h2>${mine ? '다른 띠 운세' : '띠별 운세'}</h2><span class="head-actions"><button class="copy-all" id="copy-all">전체 복사</button>·<button class="copy-all" id="share-all">공유</button></span></div>
         <div class="chips" role="group">${order.map((a) => `<button class="chip" data-a="${a}" aria-pressed="${a === start}">${a}</button>`).join('')}</div>
         <div class="detail card" id="detail"></div>`;
     }
@@ -290,6 +299,11 @@
     };
     document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => show(c.dataset.a)));
     $('copy-all')?.addEventListener('click', () => copy(boardText(board, order), '12띠 운세를 복사했어요. 원하는 곳에 붙여 넣어 보세요.'));
+    $('share-all')?.addEventListener('click', () => share(boardText(board, order), '12띠 운세를 복사했어요. 원하는 곳에 붙여 넣어 보세요.'));
+    if (mine) {
+      $('copy-mine').addEventListener('click', () => copy(fortuneText(mine), '운세를 복사했어요'));
+      $('share-mine').addEventListener('click', () => share(fortuneText(mine), '운세를 복사했어요'));
+    }
     if (order.length) {
       const chip = document.querySelector('.chip[aria-pressed="true"]');
       show(chip.dataset.a);
@@ -304,7 +318,22 @@
     const sections = order.map((a) => `〈${a}띠〉 운세지수 ${avg(board[a].map((r) => r.total))}점\n`
       + board[a].map((r) => `${twoDigit(r.birth_year)} ${r.text}`).join(' '));
     return `[나풀이] ${dateLabel} 12띠 운세 (${pillar}일)\n\n${sections.join('\n\n')}\n\n`
-      + `나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.\n${location.origin}${location.pathname}?d=${ymd}`;
+      + `나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.\n${pageUrl()}?d=${ymd}`;
+  }
+
+  const pageUrl = () => location.origin + location.pathname;
+
+  // 운세 하나 공유 글: 앱의 fortuneShareText 와 같은 모양
+  const fortuneText = (f) => `${f.text}\n\n운세 ${f.total}점 · 금전 ${f.money} · 건강 ${f.health} · 애정 ${f.love}\n\n`
+    + `— ${day[1]}월 ${day[2]}일 ${twoDigit(f.birth_year)} ${f.animal}띠 운세 · 나풀이\n${pageUrl()}?d=${ymd}&y=${f.birth_year}`;
+
+  // 휴대폰 기본 공유 창(아이폰·안드로이드). 지원하지 않는 브라우저면 복사로 대신한다
+  async function share(text, copied) {
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch {} // 사용자가 닫으면 그냥 끝
+      return;
+    }
+    copy(text, copied);
   }
 
   async function copy(text, done) {
