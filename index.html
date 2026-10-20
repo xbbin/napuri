@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나풀이 · 오늘의 띠 운세</title>
+<meta name="description" content="명리학으로 풀어 보는 오늘의 띠별 운세">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="나풀이">
+<meta property="og:title" content="나풀이 · 오늘의 띠 운세">
+<meta property="og:description" content="명리학으로 풀어 보는 오늘의 띠별 운세">
+<meta property="og:image" content="https://xbbin.github.io/napuri/icon.png">
+<meta name="theme-color" content="#0E1625">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-subset.min.css" rel="stylesheet">
+<style>
+  /* 앱 디자인(lib/ui/theme.dart)과 같은 색·글꼴 규칙: 명조는 운세의 목소리, 나머지는 고딕 */
+  :root {
+    --surface: #FDF9F1; --card: #FFFFFF; --container: #F1EDE6; --container-high: #ECE8E0;
+    --night: #1B1E29; --ink: #1C1C17; --ink-soft: #4E4637; --outline: #7F7665; --outline-variant: #D1C5B2;
+    --gold: #795900; --gold-fill: #C9A24A; --gold-light: #FFDF9E; --gold-dim: #EBC165; --on-gold-light: #5B4300;
+    --health: #50B8A5; --love: #8B90A3;
+    --serif: 'Noto Serif KR', serif;
+    --sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--sans); letter-spacing: -0.2px; }
+  body { -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: anywhere; }
+  .page { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; }
+
+  /* 밤하늘 히어로: 달빛 오로라(앱 기본 테마) */
+  .hero { position: relative; padding: calc(env(safe-area-inset-top) + 20px) 0 0; color: #FFFFFF; }
+  .sky { position: absolute; left: -30%; right: -30%; top: -40%; height: 135%; z-index: 0; pointer-events: none;
+         border-radius: 50%; overflow: hidden;
+         background: radial-gradient(ellipse at 50% 50%, #111A29 0%, #0E1625 45%, #090E18 70%);
+         -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
+                 mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); }
+  .band { position: absolute; border-radius: 50%; filter: blur(34px); mix-blend-mode: screen; opacity: .95; }
+  .b1 { width: 85%; height: 30%; left: 2%; top: 42%; background: rgba(51,112,140,.55); transform: rotate(-14deg); animation: drift1 30s ease-in-out infinite alternate; }
+  .b2 { width: 90%; height: 24%; left: 22%; top: 60%; background: rgba(78,76,138,.5); transform: rotate(6deg); animation: drift2 30s ease-in-out infinite alternate; }
+  .b3 { width: 60%; height: 26%; left: 35%; top: 30%; background: rgba(120,143,168,.32); transform: rotate(20deg); animation: drift3 30s ease-in-out infinite alternate; }
+  @keyframes drift1 { to { transform: translate(6%, -4%) rotate(-6deg) scale(1.08); } }
+  @keyframes drift2 { to { transform: translate(-8%, 3%) rotate(12deg) scale(.95); } }
+  @keyframes drift3 { to { transform: translate(-4%, 6%) rotate(28deg) scale(1.1); } }
+  .star { position: absolute; border-radius: 50%; background: #DDE6F2; animation: twinkle 4s ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity: .25; } to { opacity: .95; } }
+  @media (prefers-reduced-motion: reduce) { .band, .star { animation: none; } }
+
+  .top { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 6px; padding: 0 20px; }
+  .logo { font-family: var(--serif); font-weight: 600; font-size: 20px; letter-spacing: -0.5px; color: #FFFFFF; text-shadow: 0 1px 6px rgba(0,0,0,.35); }
+  .logo-hanja { font-family: var(--serif); font-size: 13px; color: var(--gold-dim); }
+  .quote-wrap { position: relative; z-index: 1; text-align: center; padding: 28px clamp(40px, 12.5vw, 56px) 64px; }
+  .mark { font-family: var(--serif); font-size: 32px; line-height: 1.1; color: rgba(235,193,101,.6); }
+  .quote { font-family: var(--serif); font-size: clamp(16px, 4.6vw, 19px); line-height: 1.6; letter-spacing: -0.3px; margin: 4px 0; }
+  .meta { margin-top: 18px; font-size: 13px; color: var(--gold-dim); }
+
+  main { position: relative; z-index: 1; padding: 0 20px 40px; }
+  .card { background: var(--card); border-radius: 20px; padding: 22px 24px 24px; box-shadow: 0 8px 30px rgba(31,27,22,.06); }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .label { font-size: 14px; font-weight: 500; }
+  .hanja-s { font-family: var(--serif); font-size: 12px; color: var(--outline); }
+  .spacer { flex: 1; }
+  .pill { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; color: #fff; }
+  .score-row { display: flex; align-items: baseline; margin-top: 16px; }
+  .score-xl { font-family: var(--serif); font-weight: 600; font-size: 44px; line-height: 1; letter-spacing: -1px; }
+  .unit { font-size: 15px; margin-left: 4px; color: var(--ink-soft); }
+  .caption { font-size: 12px; color: var(--outline); }
+  .bar { margin-top: 14px; }
+  .bar:first-of-type { margin-top: 24px; }
+  .bar-head { display: flex; align-items: baseline; gap: 6px; font-size: 13px; color: var(--ink-soft); }
+  .bar-head b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .track { height: 6px; border-radius: 3px; background: var(--container); margin-top: 6px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 3px; }
+
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 18px; letter-spacing: -0.7px; margin: 36px 0 12px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; border: 1px solid var(--container-high); background: var(--card); color: var(--ink-soft);
+          border-radius: 999px; padding: 8px 14px; font: 500 14px var(--sans); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--night); border-color: var(--night); color: #fff; }
+  .detail { margin-top: 16px; }
+  .detail-head { display: flex; align-items: baseline; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--container-high); }
+  .avg-label { font-size: 13px; color: var(--ink-soft); margin-right: 2px; }
+  .avg { font-family: var(--serif); font-weight: 600; font-size: 24px; letter-spacing: -0.5px; }
+  .year { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--container); }
+  .year:last-child { border-bottom: none; }
+  .year.me { background: linear-gradient(90deg, rgba(255,223,158,.35), rgba(255,223,158,0)); margin: 0 -12px; padding: 12px; border-radius: 12px; border-bottom-color: transparent; }
+  .year-label { flex: none; width: 52px; font-size: 13px; color: var(--outline); padding-top: 2px; }
+  .year-text { font-size: 15px; line-height: 1.5; }
+  .year-score { flex: none; font-size: 13px; color: var(--ink-soft); padding-top: 2px; font-variant-numeric: tabular-nums; }
+
+  .app { margin-top: 36px; text-align: center; background: var(--container); border-radius: 20px; padding: 24px 20px; }
+  .app img { width: 56px; height: 56px; border-radius: 14px; }
+  .app p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
+  .app a { display: inline-block; margin-top: 14px; background: var(--night); color: #fff; text-decoration: none; font-weight: 500; font-size: 14px; padding: 12px 20px; border-radius: 12px; }
+  .note { margin-top: 24px; text-align: center; font-size: 12px; line-height: 1.6; color: var(--outline); }
+  .msg { text-align: center; padding: 40px 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+  .loading { opacity: .6; }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <div class="sky" id="sky"><div class="band b1"></div><div class="band b2"></div><div class="band b3"></div></div>
+    <div class="top"><span class="logo">나풀이</span><span class="logo-hanja">命理</span></div>
+    <div class="quote-wrap">
+      <div class="mark" id="mark-open" hidden>“</div>
+      <p class="quote" id="quote">운세를 불러오고 있어요.</p>
+      <div class="mark" id="mark-close" hidden>”</div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </section>
+  <main id="main"></main>
+</div>
+<script>
+  // 서버 주소·공개 키는 배포할 때 채운다(tool/build_share_web.py). 공개 키는 앱에도 들어 있는 읽기 전용 키다.
+  const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
+  const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
+
+  const ANIMALS = ['쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양', '원숭이', '닭', '개', '돼지'];
+  const STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+  const BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+  const STEM_HANJA = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+  const BRANCH_HANJA = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
+  const MIN_AGE = 20, MAX_AGE = 89; // 앱 AppConfig.boardMinAge/MaxAge 와 같다
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const twoDigit = (y) => String(y % 100).padStart(2, '0') + '년생';
+  const grade = (s) => s >= 85 ? ['대길', '大吉', '#C9A24A'] : s >= 70 ? ['길', '吉', '#D9822B'] : s >= 55 ? ['평', '平', '#7A8B7B'] : ['쉬어감', '息', '#6B7C85'];
+  const avg = (xs) => Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
+
+  function kstToday() {
+    const k = new Date(Date.now() + 9 * 3600 * 1000);
+    return [k.getUTCFullYear(), k.getUTCMonth() + 1, k.getUTCDate()];
+  }
+  function dayPillar([y, m, d]) {
+    const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2000, 0, 1)) / 86400000);
+    const i = ((days + 54) % 60 + 60) % 60;
+    return [STEMS[i % 10] + BRANCHES[i % 12], STEM_HANJA[i % 10] + BRANCH_HANJA[i % 12]];
+  }
+  function ganjiHanja(name) {
+    if (!name || name.length !== 2) return '';
+    const s = STEMS.indexOf(name[0]), b = BRANCHES.indexOf(name[1]);
+    return s < 0 || b < 0 ? '' : STEM_HANJA[s] + BRANCH_HANJA[b];
+  }
+
+  // 별: 매번 같은 자리에 반짝이도록 고정 난수
+  (function stars() {
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const sky = $('sky');
+    for (let i = 0; i < 26; i++) {
+      const s = document.createElement('i');
+      const size = 1 + rnd() * 1.8;
+      s.className = 'star';
+      s.style.cssText = `width:${size}px;height:${size}px;left:${22 + rnd() * 56}%;top:${30 + rnd() * 50}%;animation-delay:${-rnd() * 4}s;`;
+      sky.appendChild(s);
+    }
+  })();
+
+  // 주소: ?d=2026-10-20&y=1992 (y 가 없으면 그날 12띠 운세)
+  const params = new URLSearchParams(location.search);
+  const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('d') || '');
+  const day = dm ? [+dm[1], +dm[2], +dm[3]] : kstToday();
+  const ymd = day.map((n, i) => i ? String(n).padStart(2, '0') : n).join('-');
+  const myYear = /^\d{4}$/.test(params.get('y') || '') ? +params.get('y') : null;
+  const [pillar, pillarHanja] = dayPillar(day);
+  const weekday = WEEK[new Date(Date.UTC(day[0], day[1] - 1, day[2])).getUTCDay()];
+  const dateLabel = `${day[1]}월 ${day[2]}일 ${weekday}요일`;
+
+  async function load() {
+    const url = `${SUPABASE_URL}/rest/v1/daily_fortunes?select=birth_year,ganji,animal,total,money,health,love,text&date=eq.${ymd}&order=birth_year.desc`;
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  }
+
+  function bar(label, hanja, value, color) {
+    return `<div class="bar"><div class="bar-head">${label}<span class="hanja-s">${hanja}</span><span class="spacer"></span><b>${value}</b></div>
+      <div class="track"><div class="fill" style="width:${value}%;background:${color}"></div></div></div>`;
+  }
+
+  function render(rows) {
+    const main = $('main');
+    const mine = myYear ? rows.find((r) => r.birth_year === myYear) : null;
+    $('meta').textContent = `${dateLabel} · ${pillar}일 ${pillarHanja}`;
+    if (!rows.length) {
+      $('quote').textContent = '이 날의 운세가 아직 없어요.';
+      main.innerHTML = `<p class="msg">운세는 매일 새벽에 만들어져요.<br>조금 뒤에 다시 열어 주세요.</p>${footer()}`;
+      return;
+    }
+    let html = '';
+    if (mine) {
+      $('quote').textContent = mine.text;
+      $('mark-open').hidden = $('mark-close').hidden = false;
+      const [g, gh, gc] = grade(mine.total);
+      document.title = `${twoDigit(mine.birth_year)} ${mine.animal}띠 · ${dateLabel} 운세 · 나풀이`;
+      html += `<div class="card">
+        <div class="row"><span class="label">${mine.birth_year}년생 ${esc(mine.animal)}띠</span><span class="hanja-s">${ganjiHanja(mine.ganji)}</span>
+          <span class="spacer"></span><span class="pill" style="background:${gc}">${gh} ${g}</span></div>
+        <div class="score-row"><span class="score-xl">${mine.total}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">오늘의 총운</span></div>
+        ${bar('금전운', '財物運', mine.money, 'var(--gold-fill)')}
+        ${bar('건강운', '健康運', mine.health, 'var(--health)')}
+        ${bar('애정운', '愛情運', mine.love, 'var(--love)')}
+      </div>`;
+    } else {
+      $('quote').textContent = `${dateLabel}, 12띠 운세`;
+      document.title = `${dateLabel} 12띠 운세 · 나풀이`;
+    }
+
+    // 12띠: 20~89세만, 쥐~돼지 순서
+    const board = {};
+    for (const r of rows) {
+      const age = day[0] - r.birth_year;
+      if (age >= MIN_AGE && age <= MAX_AGE) (board[r.animal] ||= []).push(r);
+    }
+    const order = ANIMALS.filter((a) => board[a]);
+    if (order.length) {
+      const start = mine && board[mine.animal] ? mine.animal : order[0];
+      html += `<h2>${mine ? '다른 띠 운세' : '띠별 운세'}</h2>
+        <div class="chips" role="group">${order.map((a) => `<button class="chip" data-a="${a}" aria-pressed="${a === start}">${a}</button>`).join('')}</div>
+        <div class="detail card" id="detail"></div>`;
+    }
+    html += footer();
+    main.innerHTML = html;
+
+    const show = (animal) => {
+      const list = board[animal];
+      document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.a === animal));
+      $('detail').innerHTML = `<div class="detail-head"><span class="label">${animal}띠</span><span class="spacer"></span>
+          <span class="avg-label">평균</span><span class="avg">${avg(list.map((r) => r.total))}</span><span class="unit">점</span></div>
+        ${list.map((r) => `<div class="year${r.birth_year === myYear ? ' me' : ''}"><span class="year-label">${twoDigit(r.birth_year)}</span>
+          <span class="year-text">${esc(r.text)}</span><span class="year-score">${r.total}</span></div>`).join('')}`;
+    };
+    document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => show(c.dataset.a)));
+    if (order.length) {
+      const chip = document.querySelector('.chip[aria-pressed="true"]');
+      show(chip.dataset.a);
+      // 고른 띠 칩이 화면 밖이면 가운데로(페이지는 움직이지 않게 칩 줄만 민다)
+      const row = chip.parentElement;
+      row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+    }
+  }
+
+  function footer() {
+    const play = PLAY_URL && !PLAY_URL.startsWith('__')
+      ? `<a href="${PLAY_URL}">Google Play에서 받기</a>` : '';
+    return `<div class="app"><img src="icon.png" alt=""><p>매일 아침, 내 생년월일에 맞춘 운세를<br>나풀이 앱에서 받아 보세요.</p>${play}</div>
+      <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br>© 2026 Napuri</p>`;
+  }
+
+  load().then(render).catch(() => {
+    $('meta').textContent = dateLabel;
+    $('quote').textContent = '운세를 불러오지 못했어요.';
+    $('main').innerHTML = `<p class="msg">인터넷 연결을 확인한 뒤<br>다시 열어 주세요.</p>${footer()}`;
+  });
+</script>
+</body>
+</html>
