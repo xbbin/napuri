@@ -126,13 +126,13 @@
   .privacy { margin: 14px 0 0; text-align: center; font-size: 12px; color: var(--outline); }
 
   /* 아래 탭(내 운세 모드): 앱처럼 아이콘만 */
-  body.tabs .page { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); }
+  body.tabs .page { padding-bottom: calc(env(safe-area-inset-bottom) + 48px); }
   .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--container-high);
-            padding-bottom: env(safe-area-inset-bottom); }
+            padding-bottom: max(calc(env(safe-area-inset-bottom) - 14px), 4px); } /* 아이폰 홈 막대 영역을 다 비우지 않고 조금 겹친다 */
   .tabbar div { max-width: 480px; margin: 0 auto; display: flex; }
-  .tabbar button { flex: 1; height: 52px; border: 0; background: none; color: var(--outline-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .tabbar button { flex: 1; height: 44px; border: 0; background: none; color: var(--outline-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .tabbar button[aria-current="page"] { color: var(--ink); }
-  .tabbar svg { width: 26px; height: 26px; }
+  .tabbar svg { width: 24px; height: 24px; }
 
   /* 달력 */
   .plain-top { padding: calc(env(safe-area-inset-top) + 20px) 20px 12px; display: flex; align-items: baseline; gap: 6px; }
@@ -204,7 +204,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261020105851'; // 배포할 때마다 바뀐다
+  const BUILD = '20261020110100'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
