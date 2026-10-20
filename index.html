@@ -139,6 +139,55 @@
   .primary:disabled { background: var(--container-high); color: var(--outline); cursor: default; }
   .privacy { margin: 14px 0 0; text-align: center; font-size: 12px; color: var(--outline); }
 
+  /* 아래 탭(내 운세 모드): 앱처럼 아이콘만 */
+  body.tabs .page { padding-bottom: calc(env(safe-area-inset-bottom) + 64px); }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--container-high);
+            padding-bottom: env(safe-area-inset-bottom); }
+  .tabbar div { max-width: 480px; margin: 0 auto; display: flex; }
+  .tabbar button { flex: 1; height: 52px; border: 0; background: none; color: var(--outline-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .tabbar button[aria-current="page"] { color: var(--ink); }
+  .tabbar svg { width: 26px; height: 26px; }
+
+  /* 달력 */
+  .plain-top { padding: calc(env(safe-area-inset-top) + 20px) 20px 12px; display: flex; align-items: baseline; gap: 6px; }
+  .plain-top .logo { color: var(--ink); text-shadow: none; }
+  .plain-top .logo-hanja { color: var(--gold); }
+  .cal { padding: 16px; }
+  .cal-head { display: flex; align-items: center; }
+  .cal-head h3 { flex: 1; margin: 0; text-align: center; font: 600 20px var(--serif); letter-spacing: -0.5px; }
+  .nav-btn { width: 40px; height: 40px; border: 0; background: none; border-radius: 50%; color: var(--ink-soft); cursor: pointer; font-size: 22px; line-height: 1; }
+  .nav-btn:disabled { color: var(--outline-variant); cursor: default; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 4px; margin-top: 16px; }
+  .wd { text-align: center; font-size: 12px; color: var(--outline); }
+  .wd.sun, .d.sun .n { color: #BA1A1A; }
+  .wd.sat, .d.sat .n { color: #5A5E6C; }
+  .d { height: 48px; border: 0; background: none; border-radius: 12px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+       gap: 2px; font-family: var(--sans); cursor: pointer; font-variant-numeric: tabular-nums; }
+  .d .n { font-size: 15px; font-weight: 500; color: var(--ink); }
+  .d .s { font-size: 10px; color: var(--outline); padding: 0 4px; border-radius: 999px; }
+  .d.great .s { background: var(--gold-light); color: var(--on-gold-light); font-weight: 500; }
+  .d.today { box-shadow: inset 0 0 0 1.2px var(--gold-fill); }
+  .d.sel { background: var(--night); box-shadow: 0 2px 8px rgba(31,27,22,.08); }
+  .d.sel .n { color: var(--surface); }
+  .d.sel .s { background: var(--gold-light); color: var(--on-gold-light); font-weight: 500; }
+  .d.empty .n { font-weight: 400; color: var(--outline-variant); }
+  .d.future { opacity: .4; cursor: default; }
+  .d.future .n { font-weight: 400; color: var(--outline); }
+  .d.future svg { width: 12px; height: 12px; stroke: var(--outline); fill: none; stroke-width: 2; }
+  .d:disabled { cursor: default; }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-top: 12px; font-size: 12px; color: var(--outline); }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend i { width: 8px; height: 8px; display: inline-block; border-radius: 2px; }
+  .day-card { margin-top: 24px; }
+  .day-head { display: flex; align-items: baseline; gap: 8px; }
+  .day-head h4 { margin: 0; font: 600 20px var(--serif); letter-spacing: -0.5px; }
+  .day-quote { margin: 20px 0 0; padding: 4px 4px 4px 14px; border-left: 2px solid var(--gold-dim); font: 500 16px/1.75 var(--serif); letter-spacing: -0.3px; }
+  .domains { display: flex; margin-top: 24px; }
+  .domains div { flex: 1; text-align: center; font-size: 12px; color: var(--outline); }
+  .domains div + div { border-left: 1px solid var(--container-high); }
+  .domains b { display: block; margin-top: 4px; font: 600 24px var(--serif); letter-spacing: -0.5px; }
+  hr.rule { border: 0; border-top: 1px solid var(--container-high); margin: 16px 0 0; }
+
   /* 홈 화면에 추가 안내(아이폰 사파리) */
   .install { margin-top: 16px; display: flex; gap: 12px; align-items: flex-start; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(31,27,22,.04); font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
   .install b { color: var(--ink); font-weight: 500; }
@@ -158,7 +207,12 @@
     </div>
   </section>
   <main id="main"></main>
+  <section id="calendar" hidden></section>
 </div>
+<nav class="tabbar" id="tabbar" hidden><div>
+  <button data-view="" aria-label="오늘의 운세"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.6 3.6a2 2 0 0 1 2.8 0l7 6.6c.4.4.6.9.6 1.4V19a2 2 0 0 1-2 2h-3.5a1 1 0 0 1-1-1v-4.5h-5V20a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2v-7.4c0-.5.2-1 .6-1.4z"/></svg></button>
+  <button data-view="calendar" aria-label="달력"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1zM4 10v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9zm3 2h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zm-8 4h2v2H7zm4 0h2v2h-2z"/></svg></button>
+</div></nav>
 <script>
   // 서버 주소·공개 키는 배포할 때 채운다(tool/build_share_web.py). 공개 키는 앱에도 들어 있는 읽기 전용 키다.
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
@@ -216,7 +270,8 @@
   const params = new URLSearchParams(location.search);
   const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(params.get('d') || '');
   const day = dm ? [+dm[1], +dm[2], +dm[3]] : kstToday();
-  const ymd = day.map((n, i) => i ? String(n).padStart(2, '0') : n).join('-');
+  const toYmd = (d) => d.map((n, i) => i ? String(n).padStart(2, '0') : n).join('-');
+  const ymd = toYmd(day);
   const saved = (() => { try { return JSON.parse(localStorage.getItem(STORE)); } catch { return null; } })();
   const shared = params.has('d') || params.has('y'); // 남이 보낸 링크
   const myYear = /^\d{4}$/.test(params.get('y') || '') ? +params.get('y') : (!shared && saved ? saved.year : null);
@@ -324,8 +379,8 @@
   const pageUrl = () => location.origin + location.pathname;
 
   // 운세 하나 공유 글: 앱의 fortuneShareText 와 같은 모양
-  const fortuneText = (f) => `${f.text}\n\n운세 ${f.total}점 · 금전 ${f.money} · 건강 ${f.health} · 애정 ${f.love}\n\n`
-    + `— ${day[1]}월 ${day[2]}일 ${twoDigit(f.birth_year)} ${f.animal}띠 운세 · 나풀이\n${pageUrl()}?d=${ymd}&y=${f.birth_year}`;
+  const fortuneText = (f, d = day) => `${f.text}\n\n운세 ${f.total}점 · 금전 ${f.money} · 건강 ${f.health} · 애정 ${f.love}\n\n`
+    + `— ${d[1]}월 ${d[2]}일 ${twoDigit(f.birth_year)} ${f.animal}띠 운세 · 나풀이\n${pageUrl()}?d=${toYmd(d)}&y=${f.birth_year}`;
 
   // 휴대폰 기본 공유 창(아이폰·안드로이드). 지원하지 않는 브라우저면 복사로 대신한다
   async function share(text, copied) {
@@ -446,6 +501,132 @@
       try { localStorage.setItem(STORE, JSON.stringify({ birth, year: chosen })); } catch {}
       location.replace('./');
     });
+  }
+
+  // ---------- 달력(내 운세 모드) ----------
+  const cal = { month: [kstToday()[0], kstToday()[1]], selected: null, cache: {}, first: undefined };
+  const api = (q) => fetch(`${SUPABASE_URL}/rest/v1/daily_fortunes?${q}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } })
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  const same = (a, b) => a && b && a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+  const after = (a, b) => Date.UTC(a[0], a[1] - 1, a[2]) > Date.UTC(b[0], b[1] - 1, b[2]);
+  const icon = {
+    copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
+    share: '<svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>',
+    lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  };
+
+  async function monthData([y, m]) {
+    const key = `${y}-${m}`;
+    if (!cal.cache[key]) {
+      const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      const rows = await api(`select=date,birth_year,ganji,animal,total,money,health,love,text&birth_year=eq.${saved.year}`
+        + `&date=gte.${toYmd([y, m, 1])}&date=lte.${toYmd([y, m, last])}&order=date`);
+      const today = kstToday(), map = {};
+      for (const r of rows) {
+        const d = r.date.split('-').map(Number);
+        if (!after(d, today)) map[d[2]] = r; // 서버는 내일까지 주지만 달력은 오늘까지만(앱과 같다)
+      }
+      cal.cache[key] = map;
+    }
+    return cal.cache[key];
+  }
+
+  async function showCalendar() {
+    const el = $('calendar');
+    if (cal.first === undefined) {
+      try {
+        const r = await api(`select=date&birth_year=eq.${saved.year}&order=date&limit=1`);
+        cal.first = r.length ? r[0].date.split('-').map(Number) : null;
+      } catch { cal.first = null; }
+    }
+    const [y, m] = cal.month;
+    const today = kstToday();
+    let days;
+    try { days = await monthData(cal.month); } catch { days = null; }
+    const nums = days ? Object.keys(days).map(Number) : [];
+    if (!cal.selected || cal.selected[0] !== y || cal.selected[1] !== m || !days?.[cal.selected[2]]) {
+      cal.selected = days?.[today[2]] && y === today[0] && m === today[1] ? today : nums.length ? [y, m, Math.max(...nums)] : null;
+    }
+    const canPrev = cal.first && (y > cal.first[0] || (y === cal.first[0] && m > cal.first[1]));
+    const canNext = y < today[0] || (y === today[0] && m < today[1]);
+
+    const lead = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+    const count = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    let cells = WEEK.map((w, i) => `<div class="wd${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${w}</div>`).join('');
+    cells += '<div></div>'.repeat(lead);
+    for (let d = 1; d <= count; d++) {
+      const date = [y, m, d], wd = (lead + d - 1) % 7;
+      const cls = wd === 0 ? ' sun' : wd === 6 ? ' sat' : '';
+      const f = days?.[d];
+      if (after(date, today)) cells += `<button class="d future" disabled aria-label="${m}월 ${d}일 잠김"><span class="n">${d}</span>${icon.lock}</button>`;
+      else if (!f) cells += `<button class="d empty${cls}" disabled><span class="n">${d}</span></button>`;
+      else cells += `<button class="d${cls}${f.total >= 85 ? ' great' : ''}${same(date, today) ? ' today' : ''}${same(date, cal.selected) ? ' sel' : ''}"
+        data-d="${d}" aria-label="${m}월 ${d}일 ${f.total}점"><span class="n">${d}</span><span class="s">${f.total}</span></button>`;
+    }
+
+    let detail = '';
+    if (!days) {
+      detail = `<div class="card day-card"><p class="msg" style="padding:8px 0">운세를 불러오지 못했어요.<br>인터넷 연결을 확인한 뒤 다시 열어 주세요.</p></div>`;
+    } else if (cal.selected) {
+      const s = cal.selected, f = days[s[2]];
+      const [g] = grade(f.total), gc = grade(f.total)[2];
+      const [p, ph] = dayPillar(s);
+      detail = `<div class="card day-card">
+          <div class="day-head"><h4>${s[1]}월 ${s[2]}일</h4><span class="caption">${WEEK[new Date(Date.UTC(s[0], s[1] - 1, s[2])).getUTCDay()]}요일</span>
+            <span class="spacer"></span><span class="pill" style="background:${gc}">${g} · ${f.total}점</span></div>
+          <div class="caption" style="margin-top:6px">${p}일 <span class="hanja-s">${ph}日</span></div>
+          <hr class="rule">
+          <p class="day-quote">“${esc(f.text)}”</p>
+          <div class="domains"><div>금전<b style="color:#9A7A37">${f.money}</b></div><div>건강<b style="color:#006B5D">${f.health}</b></div><div>애정<b style="color:#5A5E6C">${f.love}</b></div></div>
+        </div>
+        <div class="actions"><button class="action" id="copy-day">${icon.copy}복사하기</button><button class="action" id="share-day">${icon.share}공유하기</button></div>`;
+    } else {
+      detail = `<div class="card day-card"><p class="msg" style="padding:8px 0">이 달에는 볼 수 있는 운세가 없어요.</p></div>`;
+    }
+
+    el.innerHTML = `<div class="plain-top"><span class="logo">나풀이</span><span class="logo-hanja">命理</span></div>
+      <div style="padding:8px 20px 24px">
+        <div class="card cal">
+          <div class="cal-head"><button class="nav-btn" id="prev" aria-label="이전 달" ${canPrev ? '' : 'disabled'}>‹</button>
+            <h3>${y}년 ${m}월</h3><button class="nav-btn" id="next" aria-label="다음 달" ${canNext ? '' : 'disabled'}>›</button></div>
+          <div class="grid">${cells}</div>
+          <div class="legend"><span><i style="background:var(--gold-dim);border-radius:50%"></i>대길(85점+)</span><span><i style="background:var(--night)"></i>선택한 날</span>
+            <span><i style="box-shadow:inset 0 0 0 1.2px var(--gold-fill)"></i>오늘</span><span>${icon.lock.replace('<svg', '<svg style="width:12px;height:12px;stroke:var(--outline);fill:none;stroke-width:2"')}미래 잠금</span></div>
+        </div>
+        ${detail}
+        <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.</p>
+      </div>`;
+    const go = (delta) => { const t = new Date(Date.UTC(y, m - 1 + delta, 1)); cal.month = [t.getUTCFullYear(), t.getUTCMonth() + 1]; cal.selected = null; showCalendar(); };
+    $('prev').addEventListener('click', () => go(-1));
+    $('next').addEventListener('click', () => go(1));
+    el.querySelectorAll('.d[data-d]').forEach((b) => b.addEventListener('click', () => { cal.selected = [y, m, +b.dataset.d]; showCalendar(); }));
+    if (cal.selected && days) {
+      const f = days[cal.selected[2]], s = cal.selected;
+      $('copy-day').addEventListener('click', () => copy(fortuneText(f, s), '운세를 복사했어요'));
+      $('share-day').addEventListener('click', () => share(fortuneText(f, s), '운세를 복사했어요'));
+    }
+  }
+
+  // 탭 전환: 주소 끝 #calendar (뒤로 가기로 오늘 운세로 돌아온다)
+  function route() {
+    const calView = location.hash === '#calendar';
+    document.querySelector('.hero').hidden = $('main').hidden = calView;
+    $('calendar').hidden = !calView;
+    document.querySelectorAll('.tabbar button').forEach((b) => b.toggleAttribute('aria-current', false));
+    document.querySelector(`.tabbar button[data-view="${calView ? 'calendar' : ''}"]`).setAttribute('aria-current', 'page');
+    if (calView) showCalendar();
+    window.scrollTo(0, 0);
+  }
+
+  if (!shared && saved) {
+    document.body.classList.add('tabs');
+    $('tabbar').hidden = false;
+    document.querySelectorAll('.tabbar button').forEach((b) => b.addEventListener('click', () => {
+      const target = b.dataset.view ? '#' + b.dataset.view : location.pathname;
+      if ((location.hash === '#calendar') !== !!b.dataset.view) history.pushState(null, '', target), route();
+    }));
+    addEventListener('popstate', route);
+    route();
   }
 
   if (!shared && !saved) {
