@@ -171,6 +171,15 @@
   .domains { display: flex; margin-top: 24px; }
   .domains div { flex: 1; text-align: center; font-size: 12px; color: var(--outline); }
   .domains div + div { border-left: 1px solid var(--container-high); }
+  .exp { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .chev { display: inline-flex; margin-left: 2px; color: var(--outline); transition: transform .2s; align-self: center; }
+  .chev svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .exp.open > .exp-head .chev, .exp.open > .score-row .chev, .exp.open > .bar-head .chev { transform: rotate(180deg); }
+  .note-text { margin-top: 10px; padding-left: 10px; border-left: 2px solid var(--gold-dim); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+  .day-notes .exp-head { display: flex; justify-content: center; align-items: center; margin-top: 16px; padding: 6px 0; font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+  .note-row { display: flex; gap: 0; margin-top: 12px; }
+  .note-row b { flex: none; width: 32px; font-size: 13px; font-weight: 500; line-height: 1.55; }
+  .note-row .note-text { margin-top: 0; flex: 1; }
   .domains b { display: block; margin-top: 4px; font: 600 24px var(--serif); letter-spacing: -0.5px; }
   hr.rule { border: 0; border-top: 1px solid var(--container-high); margin: 16px 0 0; }
 
@@ -204,7 +213,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261020111138'; // 배포할 때마다 바뀐다
+  const BUILD = '20261021104048'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -400,15 +409,38 @@
   const dateLabel = `${day[1]}월 ${day[2]}일 ${weekday}요일`;
 
   async function load() {
-    const url = `${SUPABASE_URL}/rest/v1/daily_fortunes?select=birth_year,ganji,animal,total,money,health,love,text&date=eq.${ymd}&order=birth_year.desc`;
+    const url = `${SUPABASE_URL}/rest/v1/daily_fortunes?select=birth_year,ganji,animal,total,money,health,love,text,notes&date=eq.${ymd}&order=birth_year.desc`;
     const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
     if (!res.ok) throw new Error(res.status);
     return res.json();
   }
 
-  function bar(label, hanja, value, color) {
-    return `<div class="bar"><div class="bar-head">${label}<span class="hanja-s">${hanja}</span><span class="spacer"></span><b>${value}</b></div>
-      <div class="track"><div class="fill" style="width:${value}%;background:${color}"></div></div></div>`;
+  // ---------- 지수 풀이(누르면 펼침). 쉬운 말 / 명리 용어는 이 기기에 기억 ----------
+  let terms = false;
+  try { terms = localStorage.getItem('napuri_terms') === '1'; } catch {}
+  const CHEV = '<span class="chev"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span>';
+  const noteOf = (f, key, t = terms) => f?.notes?.[t ? 'term' : 'plain']?.[key] || null;
+  // 풀이 한 줄: 두 말투를 data 에 넣어 두고, 설정을 바꾸면 글자만 바꾼다
+  const noteText = (f, key, hidden = true) => `<div class="note-text" data-plain="${esc(noteOf(f, key, false) || '')}" data-term="${esc(noteOf(f, key, true) || '')}"${hidden ? ' hidden' : ''}>${esc(noteOf(f, key) || '')}</div>`;
+  function bindExplain(root) {
+    root.querySelectorAll('.exp').forEach((el) => el.addEventListener('click', () => {
+      const open = el.classList.toggle('open');
+      el.querySelectorAll(':scope > .note-text, :scope > .note-rows').forEach((n) => { n.hidden = !open; });
+      el.setAttribute('aria-expanded', open);
+    }));
+  }
+  function setTerms(value) {
+    terms = value;
+    try { localStorage.setItem('napuri_terms', value ? '1' : '0'); } catch {}
+    document.querySelectorAll('.note-text').forEach((n) => { n.textContent = n.dataset[value ? 'term' : 'plain']; });
+    document.querySelectorAll('.terms-toggle').forEach((b) => { b.textContent = termsLabel(); });
+  }
+  const termsLabel = () => terms ? '풀이를 쉬운 말로 보기' : '풀이를 명리 용어로 보기';
+
+  function bar(label, hanja, value, color, f, key) {
+    const has = noteOf(f, key);
+    return `<div class="bar${has ? ' exp' : ''}" role="${has ? 'button' : ''}"><div class="bar-head">${label}<span class="hanja-s">${hanja}</span><span class="spacer"></span><b>${value}</b>${has ? CHEV : ''}</div>
+      <div class="track"><div class="fill" style="width:${value}%;background:${color}"></div></div>${has ? noteText(f, key) : ''}</div>`;
   }
 
   function render(rows) {
@@ -430,10 +462,10 @@
       html += `<div class="card">
         <div class="row"><span class="label">${mine.birth_year}년생 ${esc(mine.animal)}띠</span><span class="hanja-s">${ganjiHanja(mine.ganji)}</span>
           <span class="spacer"></span><span class="pill" style="background:${gc}">${gh} ${g}</span></div>
-        <div class="score-row"><span class="score-xl">${mine.total}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">오늘의 총운</span></div>
-        ${bar('금전운', '財物運', mine.money, 'var(--gold-fill)')}
-        ${bar('건강운', '健康運', mine.health, 'var(--health)')}
-        ${bar('애정운', '愛情運', mine.love, 'var(--love)')}
+        <div class="${noteOf(mine, 'total') ? 'exp' : ''}"><div class="score-row"><span class="score-xl">${mine.total}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">오늘의 총운</span>${noteOf(mine, 'total') ? CHEV : ''}</div>${noteOf(mine, 'total') ? noteText(mine, 'total') : ''}</div>
+        ${bar('금전운', '財物運', mine.money, 'var(--gold-fill)', mine, 'money')}
+        ${bar('건강운', '健康運', mine.health, 'var(--health)', mine, 'health')}
+        ${bar('애정운', '愛情運', mine.love, 'var(--love)', mine, 'love')}
       </div>
       <div class="actions">
         <button class="action" id="copy-mine"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>복사하기</button>
@@ -459,9 +491,10 @@
         <div class="chips" role="group">${order.map((a) => `<button class="chip" data-a="${a}" aria-pressed="${a === start}">${a}</button>`).join('')}</div>
         <div class="detail card" id="detail"></div>`;
     }
-    html += installHint() + footer();
+    html += installHint() + footer(!!mine?.notes);
     main.innerHTML = html;
     bindFooter();
+    bindExplain(main);
 
     const show = (animal) => {
       const list = board[animal];
@@ -531,14 +564,15 @@
     toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
-  function footer() {
+  function footer(withTerms = false) {
+    const toggle = withTerms ? `<button class="link terms-toggle" id="terms">${termsLabel()}</button>` : '';
     const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     // 내 운세 화면: 생년월일 바꾸기만
-    if (!shared && saved) return `<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
+    if (!shared && saved) return `${toggle}<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
     const play = PLAY_URL && !PLAY_URL.startsWith('__')
       ? `<a href="${PLAY_URL}" style="background:none;color:var(--ink-soft);text-decoration:underline;padding:8px">Android 앱 받기</a>` : '';
     return `<div class="app"><img src="icon.png" alt=""><p>내 생년월일에 맞춘 운세를<br>매일 아침 나풀이에서 받아 보세요.</p>
-      <a href="./">${saved ? '내 운세 보기' : '내 운세 보러 가기'}</a><br>${play}</div>${note}`;
+      <a href="./">${saved ? '내 운세 보기' : '내 운세 보러 가기'}</a><br>${play}</div>${toggle}${note}`;
   }
 
   // 아이폰 사파리에서 처음 몇 번: 홈 화면에 추가하면 앱처럼 쓸 수 있다고 알려 준다
@@ -551,6 +585,7 @@
   }
 
   function bindFooter() {
+    document.querySelectorAll('.terms-toggle').forEach((b) => b.addEventListener('click', () => setTerms(!terms)));
     $('reset')?.addEventListener('click', () => { try { localStorage.removeItem(STORE); } catch {} location.replace('./'); });
     $('install-close')?.addEventListener('click', () => {
       try { localStorage.setItem('napuri_install_hint', 'off'); } catch {}
@@ -638,7 +673,7 @@
     const key = `${y}-${m}`;
     if (!cal.cache[key]) {
       const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-      const rows = await api(`select=date,birth_year,ganji,animal,total,money,health,love,text&birth_year=eq.${saved.year}`
+      const rows = await api(`select=date,birth_year,ganji,animal,total,money,health,love,text,notes&birth_year=eq.${saved.year}`
         + `&date=gte.${toYmd([y, m, 1])}&date=lte.${toYmd([y, m, last])}&order=date`);
       const today = kstToday(), map = {};
       for (const r of rows) {
@@ -697,6 +732,9 @@
           <hr class="rule">
           <p class="day-quote">“${esc(f.text)}”</p>
           <div class="domains"><div>금전<b style="color:#9A7A37">${f.money}</b></div><div>건강<b style="color:#006B5D">${f.health}</b></div><div>애정<b style="color:#5A5E6C">${f.love}</b></div></div>
+          ${f.notes ? `<div class="exp day-notes" role="button"><div class="exp-head">왜 이런 점수일까요?${CHEV}</div>
+            <div class="note-rows" hidden>${[['total', '운세'], ['money', '금전'], ['health', '건강'], ['love', '애정']]
+              .map(([k, l]) => `<div class="note-row"><b>${l}</b>${noteText(f, k, false)}</div>`).join('')}</div></div>` : ''}
         </div>
         <div class="actions"><button class="action" id="copy-day">${icon.copy}복사하기</button><button class="action" id="share-day">${icon.share}공유하기</button></div>`;
     } else {
@@ -713,8 +751,11 @@
             <span><i style="box-shadow:inset 0 0 0 1.2px var(--gold-fill)"></i>오늘</span><span>${icon.lock.replace('<svg', '<svg style="width:12px;height:12px;stroke:var(--outline);fill:none;stroke-width:2"')}미래 잠금</span></div>
         </div>
         ${detail}
+        ${cal.selected && days?.[cal.selected[2]]?.notes ? `<button class="link terms-toggle">${termsLabel()}</button>` : ''}
         <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a></p>
       </div>`;
+    bindExplain(el);
+    el.querySelectorAll('.terms-toggle').forEach((b) => b.addEventListener('click', () => setTerms(!terms)));
     const go = (delta) => { const t = new Date(Date.UTC(y, m - 1 + delta, 1)); cal.month = [t.getUTCFullYear(), t.getUTCMonth() + 1]; cal.selected = null; showCalendar(); };
     $('prev').addEventListener('click', () => go(-1));
     $('next').addEventListener('click', () => go(1));
