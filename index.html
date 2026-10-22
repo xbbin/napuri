@@ -37,7 +37,7 @@
   body { -webkit-font-smoothing: antialiased; word-break: keep-all; overflow-wrap: anywhere; }
   .page { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow: hidden; overflow: clip; } /* clip: 포커스·스크롤로 옆으로 밀리지 않게 */
 
-  /* 밤하늘 히어로: 달빛 오로라(앱 기본 테마) */
+  /* 밤하늘 히어로: 밤하늘 오로라(앱 기본 테마) */
   .hero { position: relative; padding: calc(env(safe-area-inset-top) + 20px) 0 0; color: #FFFFFF; }
   /* 오로라 캔버스: 히어로보다 아래로 넉넉히 번지고, 그 위로 카드가 올라온다 */
   .sky { position: absolute; left: 0; top: 0; width: 100%; z-index: 0; pointer-events: none; }
@@ -87,10 +87,7 @@
           border-radius: 999px; padding: 8px 14px; font: 500 14px var(--sans); cursor: pointer; }
   .chip[aria-pressed="true"] { background: var(--night); border-color: var(--night); color: #fff; }
   .detail { margin-top: 16px; }
-  .detail-head { display: flex; align-items: baseline; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--container-high); }
-  .avg-label { font-size: 13px; color: var(--ink-soft); margin-right: 2px; }
-  .avg { font-family: var(--serif); font-weight: 600; font-size: 24px; letter-spacing: -0.5px; }
-  .year { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--container); }
+    .year { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--container); }
   .year:last-child { border-bottom: none; }
   .year.me { background: linear-gradient(90deg, rgba(255,223,158,.35), rgba(255,223,158,0)); margin: 0 -12px; padding: 12px; border-radius: 12px; border-bottom-color: transparent; }
   .year-label { flex: none; width: 52px; font-size: 13px; color: var(--outline); padding-top: 2px; }
@@ -172,7 +169,10 @@
   .domains div { flex: 1; text-align: center; font-size: 12px; color: var(--outline); }
   .domains div + div { border-left: 1px solid var(--container-high); }
   .exp { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .chev { display: inline-flex; margin-left: 2px; color: var(--outline); transition: transform .2s; align-self: center; }
+  .chev { display: inline-flex; margin-left: 2px; color: var(--outline); transition: transform .2s; }
+  /* 펼침 화살표는 바로 옆 글자('오늘의 총운'·지수 숫자)의 세로 가운데에. 숫자는 아래 획이 없어 1px 올린다 */
+  .with-chev { display: inline-flex; align-items: center; }
+  .bar-head .with-chev .chev { position: relative; top: -1px; }
   .chev svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .exp.open > .exp-head .chev, .exp.open > .score-row .chev, .exp.open > .bar-head .chev { transform: rotate(180deg); }
   .note-text { margin-top: 10px; padding-left: 10px; border-left: 2px solid var(--gold-dim); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
@@ -213,7 +213,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261021110901'; // 배포할 때마다 바뀐다
+  const BUILD = '20261022105754'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -260,7 +260,7 @@
     return s < 0 || b < 0 ? '' : STEM_HANJA[s] + BRANCH_HANJA[b];
   }
 
-  // ---------- 오로라: 앱 AuroraPainter(lib/ui/aurora.dart, 달빛 테마)를 캔버스로 옮긴 것 ----------
+  // ---------- 오로라: 앱 AuroraPainter(lib/ui/aurora.dart, 밤하늘 테마)를 캔버스로 옮긴 것 ----------
   // 둥근 남색 구름(둘레 원 다섯 개가 천천히 돌아 테두리가 일렁임) 안에만 하늘 그라데이션·빛 띠·별·입자를 칠한다.
   // 앱의 MaskFilter.blur 는 브라우저마다 지원이 달라, 같은 번짐을 방사형 그라데이션으로 낸다.
   (function aurora() {
@@ -271,7 +271,7 @@
               [0.15, 0.40, 0.90, 0.20, 0.10, [78, 76, 138, 0x5C / 255], 2.1],
               [0.30, -0.15, 0.60, 0.22, 0.35, [120, 143, 168, 0x40 / 255], 4.2]],
     };
-    const TAU = Math.PI * 2, PERIOD = 30000; // 한 바퀴 30초
+    const TAU = Math.PI * 2, PERIOD = 20000; // 한 바퀴 20초(빛 띠가 흐르는 게 보일 만큼)
     let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const stars = Array.from({ length: 28 }, (_, i) => ({
@@ -351,19 +351,21 @@
       MOON.sky.forEach((c, i) => sky.addColorStop(i / 2, c));
       ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
       for (const [bx, by, brx, bry, tilt, color, phase] of MOON.bands) {
-        const [x, y] = at(bx + 0.12 * Math.sin(t + phase), by + 0.10 * Math.cos(t * 2 + phase));
-        blur(x, y, rx * brx, ry * bry, tilt + 0.15 * Math.sin(t + phase), color, rx * MOON.bandBlur);
+        const [x, y] = at(bx + 0.2 * Math.sin(t + phase), by + 0.16 * Math.cos(t * 2 + phase));
+        blur(x, y, rx * brx, ry * bry, tilt + 0.25 * Math.sin(t + phase), color, rx * MOON.bandBlur);
       }
       for (const st of stars) {
         const [x, y] = at(st.x, st.y);
         const sparkle = st.sparkle && !(Math.abs(st.x) < 0.5 && st.y > -0.6 && st.y < 0.5); // 글자 위에서는 작은 점으로
-        const tw = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * st.speed + st.phase));
+        // 대부분 어둡게 있다가 잠깐 밝게 빛난다(제곱 곡선) → '반짝'
+        const wave = 0.5 + 0.5 * Math.sin(t * (st.speed + 1) + st.phase), tw = 0.15 + 0.85 * wave * wave;
         const rgb = st.gold ? [221, 230, 242] : [255, 255, 255];
-        blur(x, y, st.r * (sparkle ? 5 : 3), st.r * (sparkle ? 5 : 3), 0, [...rgb, 0.18 * tw], st.r * (sparkle ? 3 : 2));
+        const glow = st.r * (sparkle ? 5 : 3) * (0.7 + 0.6 * tw); // 밝아질 때 빛 번짐도 커진다
+        blur(x, y, glow, glow, 0, [...rgb, 0.3 * tw], st.r * (sparkle ? 3 : 2));
         ctx.fillStyle = `rgba(${rgb},${0.9 * tw})`;
         ctx.beginPath(); ctx.arc(x, y, st.r, 0, TAU); ctx.fill();
         if (sparkle) {
-          const len = st.r * 7 * (0.8 + 0.2 * tw);
+          const len = st.r * (4 + 6 * tw);
           ctx.lineWidth = 0.8; ctx.lineCap = 'round';
           for (const [dx, dy] of [[len, 0], [0, len]]) {
             const g = ctx.createLinearGradient(x - dx, y - dy, x + dx, y + dy);
@@ -408,11 +410,17 @@
   const weekday = WEEK[new Date(Date.UTC(day[0], day[1] - 1, day[2])).getUTCDay()];
   const dateLabel = `${day[1]}월 ${day[2]}일 ${weekday}요일`;
 
+  // 지수 풀이(notes)는 한 행에 약 1KB라 내 띠 것만 따로 받아 붙인다(전송량 약 1/5). 풀이를 못 받아도 운세는 보여 준다
   async function load() {
-    const url = `${SUPABASE_URL}/rest/v1/daily_fortunes?select=birth_year,ganji,animal,total,money,health,love,text,notes&date=eq.${ymd}&order=birth_year.desc`;
-    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const get = (q) => fetch(`${SUPABASE_URL}/rest/v1/daily_fortunes?${q}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+    const [res, mine] = await Promise.all([
+      get(`select=birth_year,ganji,animal,total,money,health,love,text&date=eq.${ymd}&order=birth_year.desc`),
+      myYear ? get(`select=notes&date=eq.${ymd}&birth_year=eq.${myYear}`).then((r) => (r.ok ? r.json() : []), () => []) : [],
+    ]);
     if (!res.ok) throw new Error(res.status);
-    return res.json();
+    const rows = await res.json();
+    const notes = mine[0]?.notes;
+    return notes ? rows.map((r) => (r.birth_year === myYear ? { ...r, notes } : r)) : rows;
   }
 
   // ---------- 지수 풀이(누르면 펼침). 쉬운 말 / 명리 용어는 이 기기에 기억 ----------
@@ -439,7 +447,7 @@
 
   function bar(label, hanja, value, color, f, key) {
     const has = noteOf(f, key);
-    return `<div class="bar${has ? ' exp' : ''}" role="${has ? 'button' : ''}"><div class="bar-head">${label}<span class="hanja-s">${hanja}</span><span class="spacer"></span><b>${value}</b>${has ? CHEV : ''}</div>
+    return `<div class="bar${has ? ' exp' : ''}" role="${has ? 'button' : ''}"><div class="bar-head">${label}<span class="hanja-s">${hanja}</span><span class="spacer"></span><span class="with-chev"><b>${value}</b>${has ? CHEV : ''}</span></div>
       <div class="track"><div class="fill" style="width:${value}%;background:${color}"></div></div>${has ? noteText(f, key) : ''}</div>`;
   }
 
@@ -462,7 +470,7 @@
       html += `<div class="card">
         <div class="row"><span class="label">${mine.birth_year}년생 ${esc(mine.animal)}띠</span><span class="hanja-s">${ganjiHanja(mine.ganji)}</span>
           <span class="spacer"></span><span class="pill" style="background:${gc}">${gh} ${g}</span></div>
-        <div class="${noteOf(mine, 'total') ? 'exp' : ''}"><div class="score-row"><span class="score-xl">${mine.total}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">오늘의 총운</span>${noteOf(mine, 'total') ? CHEV : ''}</div>${noteOf(mine, 'total') ? noteText(mine, 'total') : ''}</div>
+        <div class="${noteOf(mine, 'total') ? 'exp' : ''}"><div class="score-row"><span class="score-xl">${mine.total}</span><span class="unit">점</span><span class="spacer"></span><span class="with-chev"><span class="caption">오늘의 총운</span>${noteOf(mine, 'total') ? CHEV : ''}</span></div>${noteOf(mine, 'total') ? noteText(mine, 'total') : ''}</div>
         ${bar('금전운', '財物運', mine.money, 'var(--gold-fill)', mine, 'money')}
         ${bar('건강운', '健康運', mine.health, 'var(--health)', mine, 'health')}
         ${bar('애정운', '愛情運', mine.love, 'var(--love)', mine, 'love')}
@@ -499,9 +507,8 @@
     const show = (animal) => {
       const list = board[animal];
       document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.a === animal));
-      $('detail').innerHTML = `<div class="detail-head"><span class="label">${animal}띠</span><span class="spacer"></span>
-          <span class="avg-label">평균</span><span class="avg">${avg(list.map((r) => r.total))}</span><span class="unit">점</span></div>
-        ${list.map((r) => `<div class="year${r.birth_year === myYear ? ' me' : ''}"><span class="year-label">${twoDigit(r.birth_year)}</span>
+      // 띠 평균 점수는 보여 주지 않는다(앱 홈과 같게, 출생연도별 문장만). 복사·공유 글에는 그대로 있다
+      $('detail').innerHTML = `${list.map((r) => `<div class="year${r.birth_year === myYear ? ' me' : ''}"><span class="year-label">${twoDigit(r.birth_year)}</span>
           <span class="year-text">${esc(r.text)}</span></div>`).join('')}`;
     };
     document.querySelectorAll('.chip').forEach((c) => c.addEventListener('click', () => show(c.dataset.a)));
