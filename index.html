@@ -186,6 +186,19 @@
   /* 홈 화면에 추가 안내(아이폰 사파리) */
   .install { margin-top: 16px; display: flex; gap: 12px; align-items: flex-start; background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(31,27,22,.04); font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
   .install b { color: var(--ink); font-weight: 500; }
+  /* 궁합 공유 화면 */
+  .gh-pair { display: block; font-family: var(--serif); font-size: 30px; color: #EBC165; letter-spacing: 6px; margin-bottom: 10px; }
+  .gh-pair small { font-size: 14px; margin: 0 14px; letter-spacing: 0; vertical-align: middle; }
+  .gh-kv { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--container); font-size: 15px; line-height: 1.6; color: var(--ink-soft); word-break: keep-all; }
+  .score-row + .gh-kv { margin-top: 14px; }
+  .gh-kv b { flex: none; width: 76px; font-size: 14px; font-weight: 500; color: var(--ink); }
+  .gh-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .gh-tags span { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: #EEF0EC; color: #4F5F50; }
+  .gh-tags span.good { background: #F6EEDC; color: var(--gold); }
+  .gh-tags i { font-style: normal; font-family: var(--serif); }
+  .gh-flow { margin-top: 12px; padding: 16px 20px; font-size: 14px; line-height: 1.6; color: var(--ink-soft); word-break: keep-all; }
+  .gh-flow b { display: block; font-size: 14px; font-weight: 500; color: var(--gold); margin-bottom: 2px; }
+  .gh-note { text-align: center; font-size: 13px; color: var(--ink-soft); margin: 18px 0 0; }
   .install button { flex: none; background: none; border: 0; color: var(--outline); font-size: 18px; line-height: 1; padding: 0 2px; cursor: pointer; }
 </style>
 </head>
@@ -213,7 +226,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261022105754'; // 배포할 때마다 바뀐다
+  const BUILD = '20261027104839'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -571,11 +584,58 @@
     toast.timer = setTimeout(() => el.classList.remove('show'), 2200);
   }
 
-  function footer(withTerms = false) {
+  // ---------- 궁합 공유 링크: ?g=1986-1995 (출생연도만, 이름·생년월일은 담지 않는다) ----------
+  // 기본 궁합(점수·관계·문장)은 앱과 같은 파일(gunghap.json, 엔진이 만든다)에서 찾는다. 앱 lib/core/gunghap.dart 와 같은 규칙
+  async function showGunghap(ya, yb) {
+    const pillar = (y) => ((y - 4) % 60 + 60) % 60;
+    const [i, j] = [pillar(ya), pillar(yb)].sort((x, y) => x - y);
+    const label = (y) => `${twoDigit(y)} ${ANIMALS[((y - 4) % 12 + 12) % 12]}띠`;
+    $('meta').textContent = `${label(ya)} × ${label(yb)} 궁합`;
+    document.title = `${label(ya)} × ${label(yb)} 궁합 · 나풀이`;
+    let g;
+    try { g = (await fetch('gunghap.json').then((r) => r.json())).pairs[`${i}-${j}`]; } catch {}
+    if (!g) {
+      $('quote').textContent = '궁합을 불러오지 못했어요.';
+      $('main').innerHTML = `<p class="msg">인터넷 연결을 확인한 뒤<br>다시 열어 주세요.</p>${footer(false, true)}`;
+      return bindFooter();
+    }
+    const bh = (y) => BRANCH_HANJA[((y - 4) % 12 + 12) % 12], sh = (y) => STEM_HANJA[((y - 4) % 10 + 10) % 10];
+    // 합·충·형·파·해가 없으면 '寅子 무난' + 년간 오행 관계(앱 gunghapTags 와 같다)
+    const tags = g.r.length
+      ? g.r.map((r) => [r.startsWith('천간') ? sh(ya) + sh(yb) : bh(ya) + bh(yb), r])
+      : [[bh(ya) + bh(yb), '무난'], ...(g.e ? [[sh(ya) + sh(yb), g.e === '같은 오행' ? '같은 기운' : g.e]] : [])];
+    const good = (r) => r.includes('합') || r.startsWith('같은') || r === '상생';
+    const mark = g.r.includes('충') ? '충' : (g.r.some((r) => r.includes('합')) ? '합' : '');
+    $('quote').innerHTML = `<span class="gh-pair">${bh(ya)}<small>${mark}</small>${bh(yb)}</span>${esc(g.t)}`;
+    // 오행 흐름(년간 오행)
+    const things = ['나무', '불', '흙', '쇠', '물'], el = (y) => Math.floor(((y - 4) % 10 + 10) % 10 / 2);
+    const gen = ['{A} 나무가 {B} 불을 지펴 줘요.', '{A} 불이 {B} 흙을 데워 줘요.', '{A} 흙이 {B} 쇠를 품어 길러요.', '{A} 쇠가 {B} 물을 맑게 해 줘요.', '{A} 물이 {B} 나무를 길러 줘요.'];
+    const ctl = ['{A} 나무가 {B} 흙을 붙잡아 줘요.', '{A} 불이 {B} 쇠를 다듬어 줘요.', '{A} 흙이 {B} 물길을 잡아 줘요.', '{A} 쇠가 {B} 나무를 다듬어 줘요.', '{A} 물이 {B} 불을 식혀 줘요.'];
+    const E = ['목', '화', '토', '금', '수'], ea = el(ya), eb = el(yb);
+    const fill = (t, fromA) => t.replace('{A}', `${twoDigit(fromA ? ya : yb)}의`).replace('{B}', `${twoDigit(fromA ? yb : ya)}의`);
+    let flow;
+    if (ea === eb) flow = ['같은 기운', `둘 다 ${things[ea]}의 기운이라 결이 닮았어요.`];
+    else if ((ea + 1) % 5 === eb) flow = [`${E[ea]}생${E[eb]}`, fill(gen[ea], true)];
+    else if ((eb + 1) % 5 === ea) flow = [`${E[eb]}생${E[ea]}`, fill(gen[eb], false)];
+    else if ((ea + 2) % 5 === eb) flow = [`${E[ea]}극${E[eb]}`, fill(ctl[ea], true) + ' 서로 다잡아 주는 사이예요.'];
+    else flow = [`${E[eb]}극${E[ea]}`, fill(ctl[eb], false) + ' 서로 다잡아 주는 사이예요.'];
+    $('main').innerHTML = `<div class="card">
+        <div class="score-row" style="margin-top:0"><span class="score-xl">${g.s}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">기본 궁합</span></div>
+        <div class="gh-kv"><b>잘 맞는 점</b><span>${esc(g.g)}</span></div>
+        <div class="gh-kv"><b>${g.s < 60 ? '이렇게 하면' : '조심할 점'}</b><span>${esc(g.c)}</span></div>
+        <div class="gh-tags">${tags.map(([h, r]) => `<span class="${good(r) ? 'good' : ''}"><i>${h}</i> ${r}</span>`).join('')}</div>
+      </div>
+      <div class="card gh-flow"><b>${flow[0]}</b><span>${esc(flow[1])}</span></div>
+      <p class="gh-note">나풀이 앱에서는 두 사람의 <b>오늘의 한 줄</b>도 매일 볼 수 있어요.</p>
+      ${footer(false, true)}`;
+    bindFooter();
+  }
+
+  function footer(withTerms = false, promo = false) {
     const toggle = withTerms ? `<button class="link terms-toggle" id="terms">${termsLabel()}</button>` : '';
     const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     // 내 운세 화면: 생년월일 바꾸기만
-    if (!shared && saved) return `${toggle}<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
+    if (!shared && saved && !promo) return `${toggle}<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
     const play = PLAY_URL && !PLAY_URL.startsWith('__')
       ? `<a href="${PLAY_URL}" style="background:none;color:var(--ink-soft);text-decoration:underline;padding:8px">Android 앱 받기</a>` : '';
     return `<div class="app"><img src="icon.png" alt=""><p>내 생년월일에 맞춘 운세를<br>매일 아침 나풀이에서 받아 보세요.</p>
@@ -799,7 +859,10 @@
   // 오늘(한국 날짜) 이후는 보여 주지 않는다. 서버는 앱의 '광고 보고 내일 운세 미리 보기' 때문에 내일까지 열려 있어서,
   // 주소의 날짜만 바꿔 광고 없이 내일 운세를 보는 길을 웹에서 막는다
   const future = Date.UTC(day[0], day[1] - 1, day[2]) > Date.UTC(...kstToday().map((n, i) => (i === 1 ? n - 1 : n)));
-  if (!shared && !saved) {
+  const gm = /^(\d{4})-(\d{4})$/.exec(params.get('g') || '');
+  if (gm) {
+    showGunghap(+gm[1], +gm[2]);
+  } else if (!shared && !saved) {
     setup();
   } else if (future) {
     $('meta').textContent = dateLabel;
