@@ -212,6 +212,14 @@
   .hs-advice { margin-top: 20px; padding: 14px 16px; border-radius: 14px; background: #FAF4E8; font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
   .hs-advice b { display: block; font-size: 13px; font-weight: 500; color: var(--gold); margin-bottom: 2px; }
   .hs-reason { margin: 16px 4px 0; font-size: 13px; line-height: 1.55; color: var(--outline); }
+  /* 타로 공유 화면 */
+  .tr-card { display: block; width: 150px; height: auto; margin: 0 auto; border-radius: 15px; box-shadow: 0 12px 30px -8px rgba(26,27,51,.15); }
+  .tr-flip { perspective: 800px; }
+  .tr-flip img { transition: transform .26s ease-in; }
+  .tr-flip.turning img { transform: rotateY(90deg); }
+  .tr-num { text-align: center; margin-top: 18px; font-size: 12px; color: var(--gold); letter-spacing: 2px; }
+  .tr-me { margin-top: 14px; }
+  .tr-me .birth { font-size: 22px; }
   .install button { flex: none; background: none; border: 0; color: var(--outline); font-size: 18px; line-height: 1; padding: 0 2px; cursor: pointer; }
 </style>
 </head>
@@ -239,7 +247,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261103093213'; // 배포할 때마다 바뀐다
+  const BUILD = '20261103094026'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -721,6 +729,118 @@
     draw(n);
   }
 
+  // ---------- 타로 공유 링크: ?t=17&d=2026-11-03 (카드 번호 0 = 광대 ~ 21 = 세계, 날짜) ----------
+  // 풀이는 앱과 같은 파일(tarot.json), 카드 그림은 앱 그림을 찍은 것(tarot/NN.png, tool/web_tarot).
+  // '나도 오늘 카드 뒤집기'는 앱 todayTarotIndex 와 같은 규칙(생년월일 + 날짜)으로 이 기기 안에서 고른다
+  const ROMAN = (n) => n === 0 ? '0' : [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].reduce((o, [v, r]) => { while (n >= v) { o += r; n -= v; } return o; }, '');
+  const dayOrdinal = ([y, m, d]) => Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2000, 0, 1)) / 86400000);
+
+  // 앱(Dart 64비트 정수)과 같은 값을 내려고 BigInt 로 계산한다(곱이 2^53 을 넘는다)
+  function tarotIndex([by, bm, bd], day, size = 22) {
+    const M = 0x7fffffffn;
+    const mix = (birth, salt) => {
+      let x = (BigInt(birth) * 2654435761n + BigInt(salt) * 40503n + 0x9E3779B9n) & M;
+      x = ((x ^ (x >> 13n)) * 1103515245n) & M;
+      return x ^ (x >> 16n);
+    };
+    const order = (birth, cycle) => {
+      const o = Array.from({ length: size }, (_, i) => i);
+      let x = mix(birth, cycle);
+      for (let i = size - 1; i > 0; i--) {
+        x = (x * 1103515245n + 12345n) & M;
+        const j = Number(x % BigInt(i + 1));
+        [o[i], o[j]] = [o[j], o[i]];
+      }
+      return o;
+    };
+    const birth = by * 10000 + bm * 100 + bd, ord = dayOrdinal(day);
+    const cycle = Math.floor(ord / size), pos = ord % size;
+    const o = order(birth, cycle), k = Math.min(7, Math.floor(size / 3));
+    const recent = new Set(order(birth, cycle - 1).slice(size - k));
+    let j = k;
+    for (let i = 0; i < k; i++) {
+      if (!recent.has(o[i])) continue;
+      while (recent.has(o[j])) j++;
+      [o[i], o[j]] = [o[j], o[i]];
+      j++;
+    }
+    return o[pos];
+  }
+
+  function tarotReading(deck, n, day) {
+    const c = deck.cards[n], ord = dayOrdinal(day);
+    return { card: c, line: c.lines[ord % c.lines.length], detail: c.details[ord % c.details.length], advice: c.advices[(ord + 1) % c.advices.length] };
+  }
+
+  async function showTarot(n) {
+    let deck;
+    try { deck = await fetch('tarot.json').then((r) => r.json()); } catch {}
+    if (!deck) {
+      $('quote').textContent = '타로를 불러오지 못했어요.';
+      $('main').innerHTML = `<p class="msg">인터넷 연결을 확인한 뒤<br>다시 열어 주세요.</p>${footer(false, true)}`;
+      return bindFooter();
+    }
+    new Image().src = 'tarot/back.png'; // 뒤집을 때 바로 보이게 미리 받아 둔다
+    const isToday = day.join() === kstToday().join();
+    const draw = (n, mine) => {
+      const { card, line, detail, advice } = tarotReading(deck, n, day);
+      document.title = `${card.name} · ${dateLabel} 타로 · 나풀이`;
+      $('meta').textContent = `${dateLabel} · ${mine ? '내 카드' : '오늘의 타로'}`;
+      $('quote').textContent = line;
+      $('mark-open').hidden = $('mark-close').hidden = false;
+      // 오늘 링크일 때만 '나도 뒤집기'(지난 날은 그날의 카드라 뽑을 수 없다). 웹에 저장한 생년월일이 있으면 바로 쓴다
+      const me = !mine && isToday ? `<h2>나도 오늘 카드 뒤집기</h2>
+        <div class="card tr-me">${saved?.birth ? `<p class="hint" style="margin:0">저장된 생년월일(${saved.birth.replaceAll('-', '. ')})로 뒤집어요.</p>`
+          : `<label class="field-label" for="tb">생년월일 (양력)</label><input class="birth" id="tb" inputmode="numeric" autocomplete="bday" placeholder="1990. 01. 01">
+            <p class="hint" id="th">숫자 8자리로 적어 주세요. 생년월일은 이 기기 안에서만 써요.</p>`}
+          <button class="primary" id="tflip" ${saved?.birth ? '' : 'disabled'}>내 카드 뒤집기</button></div>` : '';
+      $('main').innerHTML = `<div class="card">
+          <div class="tr-flip" id="tcard"><img class="tr-card" src="tarot/${String(n).padStart(2, '0')}.png" alt="${esc(card.name)} 카드" width="150" height="234"></div>
+          <div class="tr-num">${ROMAN(n)}</div>
+          <div class="hs-name"><b>${esc(card.name)}</b><span>${esc(card.en)}</span></div>
+          <div class="hs-score"><span class="hs-topic">${esc(card.keyword)}</span></div>
+          <div class="hs-sec">카드 풀이</div>
+          <p class="hs-body">${esc(detail)}</p>
+          <div class="hs-advice"><b>한마디</b>${esc(advice)}</div>
+        </div>
+        ${me}
+        <p class="gh-note">나풀이 앱에서는 <b>하루 한 장</b>, 내 카드를 매일 뒤집어 볼 수 있어요.</p>
+        ${footer(false, true)}`;
+      bindFooter();
+      if (!me) return;
+      let birth = saved?.birth ? saved.birth.split('-').map(Number) : null;
+      const input = $('tb'), hint = $('th'), btn = $('tflip');
+      input?.addEventListener('input', () => {
+        const digits = input.value.replace(/\D/g, '').slice(0, 8);
+        input.value = digits.slice(0, 4) + (digits.length > 4 ? '. ' + digits.slice(4, 6) : '') + (digits.length > 6 ? '. ' + digits.slice(6) : '');
+        birth = null; btn.disabled = true; hint.className = 'hint'; hint.textContent = '숫자 8자리로 적어 주세요. 생년월일은 이 기기 안에서만 써요.';
+        if (digits.length < 8) return;
+        const y = +digits.slice(0, 4), m = +digits.slice(4, 6), d = +digits.slice(6), dt = new Date(Date.UTC(y, m - 1, d));
+        if (dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d || y < 1900 || dt > Date.UTC(day[0], day[1] - 1, day[2])) {
+          hint.className = 'hint error'; hint.textContent = '없는 날짜예요'; return;
+        }
+        birth = [y, m, d]; btn.disabled = false; hint.textContent = '';
+      });
+      btn.addEventListener('click', () => {
+        if (!birth) return;
+        const k = tarotIndex(birth, day);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 뒤집기: 지금 카드가 옆으로 돌아 사라지면(뒷면) → 내 카드가 돌아 나온다. 다 돈 뒤에 풀이를 바꾼다
+        const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const flip = $('tcard'), img = flip.querySelector('img');
+        const turn = () => new Promise((r) => { flip.classList.add('turning'); setTimeout(r, still ? 0 : 260); });
+        const back = () => new Promise((r) => { flip.classList.remove('turning'); setTimeout(r, still ? 0 : 260); });
+        turn().then(() => { img.src = 'tarot/back.png'; return back(); })
+          .then(turn).then(() => { img.src = `tarot/${String(k).padStart(2, '0')}.png`; return back(); })
+          .then(() => {
+            history.replaceState(null, '', `?t=${k}&d=${ymd}`); // 이 주소를 그대로 공유하면 내 카드
+            draw(k, true);
+          });
+      });
+    };
+    draw(n, false);
+  }
+
   function footer(withTerms = false, promo = false) {
     const toggle = withTerms ? `<button class="link terms-toggle" id="terms">${termsLabel()}</button>` : '';
     const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
@@ -951,10 +1071,13 @@
   const future = Date.UTC(day[0], day[1] - 1, day[2]) > Date.UTC(...kstToday().map((n, i) => (i === 1 ? n - 1 : n)));
   const gm = /^(\d{4})-(\d{4})$/.exec(params.get('g') || '');
   const sm = /^(\d|1[01])$/.exec(params.get('s') || '');
+  const tm = /^(\d|1\d|2[01])$/.exec(params.get('t') || '');
   if (gm) {
     showGunghap(+gm[1], +gm[2]);
   } else if (sm && !future) {
     showHoroscope(+sm[1]);
+  } else if (tm && !future) {
+    showTarot(+tm[1]);
   } else if (!shared && !saved) {
     setup();
   } else if (future) {
