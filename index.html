@@ -199,6 +199,32 @@
   .gh-flow { margin-top: 12px; padding: 16px 20px; font-size: 14px; line-height: 1.6; color: var(--ink-soft); word-break: keep-all; }
   .gh-flow b { display: block; font-size: 14px; font-weight: 500; color: var(--gold); margin-bottom: 2px; }
   .gh-title { margin: 0 0 14px; font: 600 17px/1.5 var(--serif); letter-spacing: -0.4px; }
+  .gh-today { border: 1px solid var(--container-high); }
+  .gh-today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .gh-today-head b { font: 600 15px var(--serif); color: var(--gold); }
+  /* 오늘의 궁합 하늘: 내 띠 · 점수 · 상대 띠 */
+  .gh-trio { display: flex; align-items: flex-start; justify-content: center; gap: 4px; margin-bottom: 18px; }
+  .gh-side, .gh-mid { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  .gh-mid { flex: 1.1; }
+  .gh-glyph { font-family: var(--serif); font-size: 34px; line-height: 1.25; color: #EBC165; }
+  .gh-score { font-family: var(--serif); font-weight: 500; font-size: 46px; line-height: 1.05; color: #FFFFFF; }
+  .gh-mark { font-family: var(--serif); font-size: 12px; line-height: 1; color: #EBC165; margin-bottom: -2px; }
+  .gh-trio small { margin-top: 3px; font-family: var(--sans); font-size: 11.5px; line-height: 1.35; color: rgba(255,255,255,.7); letter-spacing: -0.2px; white-space: nowrap; }
+  .gh-trio small b { font-weight: 600; color: #FFFFFF; }
+  .gh-do { display: flex; gap: 10px; margin-top: 16px; }
+  .gh-do i { flex: none; width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
+  .gh-do span { display: block; font-size: 13px; color: var(--outline); }
+  .gh-do b { display: inline; font: 500 15px/1.6 var(--serif); color: var(--ink); background: linear-gradient(transparent 55%, #F6EEDD 55%, #F6EEDD 92%, transparent 92%); }
+  .gh-lucky-head { margin-top: 16px; font-size: 14px; font-weight: 500; }
+  .gh-lucky-why { margin: 4px 0 0; font-size: 13px; line-height: 1.55; color: var(--outline); }
+  .gh-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .gh-tile { background: #FAF4E8; border: 1px solid #E6DCC8; border-radius: 16px; padding: 12px 12px 12px 14px; }
+  .gh-tile span { display: block; font-size: 11px; color: var(--outline); }
+  .gh-tile b { display: block; margin-top: 2px; font: 500 14px/1.4 var(--serif); color: #7A5F3A; }
+  .gh-hours { margin-top: 16px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--container); }
+  .gh-hours span { display: block; font-size: 12px; color: var(--outline); }
+  .gh-hours b { display: block; margin-top: 2px; font-size: 15px; font-weight: 500; white-space: nowrap; }
+  .gh-hours small { display: block; margin-top: 2px; font-size: 12px; color: var(--outline); }
   .gh-note { text-align: center; font-size: 13px; color: var(--ink-soft); margin: 18px 0 0; }
   /* 별자리 공유 화면 */
   .hs-glyph { display: block; font-family: var(--serif); font-size: 34px; line-height: 1.2; color: #EBC165; margin-bottom: 8px; }
@@ -248,7 +274,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261103100626'; // 배포할 때마다 바뀐다
+  const BUILD = '20261103102317'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -610,13 +636,13 @@
   // 기본 궁합(점수·관계·문장)은 앱과 같은 파일(gunghap.json, 엔진이 만든다)에서 찾는다. 앱 lib/core/gunghap.dart 와 같은 규칙
   // 오늘의 궁합(?g=…&d=날짜&l=문장 자리): 점수는 앱 todayGunghapScore 와 같은 규칙으로 그날 두 띠의 운세 점수에서 다시 셈하고,
   // 오늘 한 줄은 앱이 고른 문장(gunghap_lines.json 의 자리)을 상대 띠 이름으로 채운다. 하나라도 없으면 null(기본 궁합만 보여 준다)
-  async function gunghapToday(ya, yb, base, lineId) {
+  async function gunghapToday(ya, yb, base, lineId, guideIndex) {
     const br = (y) => ((y - 4) % 12 + 12) % 12, iljin = (dayOrdinal(day) + 54) % 60 % 12;
     const binds = (a, b) => a !== b && ((a + b) % 12 === 1 || a % 4 === b % 4), clashes = (a, b) => Math.abs(a - b) === 6;
     const [rows, bank] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/daily_fortunes?select=birth_year,total&date=eq.${ymd}&birth_year=in.(${ya},${yb})`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }).then((r) => (r.ok ? r.json() : [])),
-      lineId ? fetch('gunghap_lines.json').then((r) => r.json()) : null,
+      lineId || guideIndex != null ? fetch('gunghap_lines.json').then((r) => r.json()) : null,
     ]);
     const total = (y) => rows.find((r) => r.birth_year === y)?.total;
     const [ma, mb] = [total(ya), total(yb)];
@@ -627,9 +653,45 @@
     const [key, n] = (lineId || '').split('.');
     const template = bank ? (bank.today[key] || bank.index[key])?.[+n] : null;
     const name = `${ANIMALS[you]}띠`, b = /[가-힣]$/.test(name) && (name.charCodeAt(name.length - 1) - 0xAC00) % 28 !== 0;
-    const line = template ? template.replaceAll('{이름이}', name + (b ? '이' : '가')).replaceAll('{이름과}', name + (b ? '과' : '와'))
-      .replaceAll('{이름을}', name + (b ? '을' : '를')).replaceAll('{이름에게}', name + '에게').replaceAll('{이름의}', name + '의').replaceAll('{이름}', name) : null;
-    return { score, line };
+    const fill = (t) => t.replaceAll('{이름이}', name + (b ? '이' : '가')).replaceAll('{이름과}', name + (b ? '과' : '와'))
+      .replaceAll('{이름을}', name + (b ? '을' : '를')).replaceAll('{이름에게}', name + '에게').replaceAll('{이름의}', name + '의').replaceAll('{이름}', name);
+    const line = template ? fill(template) : null;
+    // 할 것 · 피할 것: 상황은 앱 todayGuide 와 같은 규칙(충 → 합 → 점수), 몇 번째 문장인지는 링크(&a=)
+    const gkey = clashes(iljin, me) || clashes(iljin, you) ? 'clash' : (binds(iljin, me) && binds(iljin, you) ? 'binds' : (score >= 80 ? 'high' : (score >= 65 ? 'mid' : 'low')));
+    const g = guideIndex != null && bank ? bank.guide[gkey]?.[guideIndex] : null;
+    return { score, line, mine: ma, yours: mb, guide: g ? { good: fill(g.g), avoid: fill(g.a) } : null };
+  }
+
+  // 오늘의 행운: 앱 todayLucky 와 같은 규칙(일진 천간 ↔ 상대, 나 ↔ 상대, 일진 ↔ 나 순으로 처음 부딪히는 두 기운을 잇는 오행)
+  function gunghapLucky(ya, yb) {
+    const EL = ['목', '화', '토', '금', '수'], TH = ['나무', '불', '흙', '쇠', '물'];
+    const COLOR = ['초록', '붉은색', '노란색·베이지', '흰색·은색', '남색·검은색'], DIR = ['동쪽', '남쪽', '가운데(가까운 곳)', '서쪽', '북쪽'];
+    const FOOD = ['새콤한 과일', '따뜻한 차', '고구마나 곡물', '무·생강처럼 알싸한 것', '따뜻한 국물'];
+    const el = (y) => Math.floor(((y - 4) % 10 + 10) % 10 / 2), d = Math.floor((dayOrdinal(day) + 54) % 60 % 10 / 2);
+    const me = el(ya), you = el(yb), an = (y) => ANIMALS[((y - 4) % 12 + 12) % 12];
+    const bridge = (a, b) => (a + 2) % 5 === b ? (a + 1) % 5 : ((b + 2) % 5 === a ? (b + 1) % 5 : null);
+    const today = `오늘의 ${TH[d]} 기운`, mine = `${an(ya)}띠의 ${TH[me]} 기운`, yours = `${an(yb)}띠의 ${TH[you]} 기운`;
+    const pick = [[bridge(d, you), today, yours], [bridge(me, you), mine, yours], [bridge(d, me), today, mine]].find((c) => c[0] != null);
+    const k = pick ? pick[0] : d;
+    const batchim = (TH[k].charCodeAt(TH[k].length - 1) - 0xAC00) % 28 !== 0;
+    const reason = pick ? `${pick[1]}과 ${pick[2]} 사이를 ${TH[k]}${batchim ? '이' : '가'} 이어 줘요.` : `오늘은 ${TH[d]}의 기운이 순하게 흐르는 날이에요.`;
+    return { element: EL[k], reason, color: COLOR[k], direction: DIR[k], food: FOOD[k] };
+  }
+
+  // 잘 맞는 시간(시진): 앱 goodHours 와 같은 규칙. 두 띠 모두와 합인 시진, 없으면 한쪽과 합인 시진(충·형·해는 뺀다), 아침 7시~밤 11시
+  function goodHours(ya, yb) {
+    const NAMES = ['자시', '축시', '인시', '묘시', '진시', '사시', '오시', '미시', '신시', '유시', '술시', '해시'];
+    const RANGES = ['23~1시', '1~3시', '3~5시', '5~7시', '7~9시', '9~11시', '11~13시', '13~15시', '15~17시', '17~19시', '19~21시', '21~23시'];
+    const binds = (a, b) => a !== b && ((a + b) % 12 === 1 || a % 4 === b % 4), clashes = (a, b) => Math.abs(a - b) === 6;
+    const pairs = ['2-5', '5-8', '2-8', '1-10', '7-10', '1-7', '0-3'], self = [4, 6, 9, 11];
+    const hyeong = (a, b) => (a === b ? self.includes(a) : pairs.includes(`${Math.min(a, b)}-${Math.max(a, b)}`));
+    const hae = (a, b) => a !== b && (a + b) % 12 === 7;
+    const bad = (h, x) => clashes(h, x) || hyeong(h, x) || hae(h, x);
+    const me = ((ya - 4) % 12 + 12) % 12, you = ((yb - 4) % 12 + 12) % 12;
+    const awake = []; for (let h = 4; h <= 11; h++) if (!bad(h, me) && !bad(h, you)) awake.push(h);
+    const both = awake.filter((h) => binds(h, me) && binds(h, you));
+    const hours = both.length ? both : awake.filter((h) => binds(h, me) || binds(h, you));
+    return { both: both.length > 0, list: hours.slice(0, 2).map((h) => `${NAMES[h]} ${RANGES[h]}`) };
   }
 
   async function showGunghap(ya, yb) {
@@ -643,7 +705,10 @@
     // 날짜가 있는 링크(앱에서 '오늘의 궁합'을 공유)면 그날의 궁합도. 오늘(한국) 이후 날짜는 보여 주지 않는다
     let today = null;
     if (g && params.has('d') && !future) {
-      try { today = await gunghapToday(ya, yb, g.s, /^[a-z_]+\.\d+$/.test(params.get('l') || '') ? params.get('l') : null); } catch {}
+      try {
+        today = await gunghapToday(ya, yb, g.s, /^[a-z_]+\.\d+$/.test(params.get('l') || '') ? params.get('l') : null,
+          /^\d+$/.test(params.get('a') || '') ? +params.get('a') : null);
+      } catch {}
     }
     if (!g) {
       $('quote').textContent = '궁합을 불러오지 못했어요.';
@@ -657,11 +722,17 @@
       : [[bh(ya) + bh(yb), '무난'], ...(g.e ? [[sh(ya) + sh(yb), g.e === '같은 오행' ? '같은 기운' : g.e]] : [])];
     const good = (r) => r.includes('합') || r.startsWith('같은') || r === '상생';
     const mark = g.r.includes('충') ? '충' : (g.r.some((r) => r.includes('합')) ? '합' : '');
-    $('quote').innerHTML = `<span class="gh-pair">${bh(ya)}<small>${mark}</small>${bh(yb)}</span>${esc(today?.line || g.t)}`;
     if (today) {
-      const an = (y) => ANIMALS[((y - 4) % 12 + 12) % 12];
-      $('meta').textContent = `${day[1]}월 ${day[2]}일 · ${an(ya)}띠 × ${an(yb)}띠 오늘의 궁합`; // 한 줄에 들어가게 짧게
+      // 앱 궁합 화면처럼 하늘 위에: 내 띠 · 오늘의 궁합 점수 · 상대 띠(각자 오늘 점수 · 등급). 날짜 · 일진은 하늘 맨 아래 줄로
+      const an = (y) => ANIMALS[((y - 4) % 12 + 12) % 12], gl = (n) => grade(n)[0];
+      const side = (y, n) => `<div class="gh-side"><span class="gh-glyph">${bh(y)}</span><small>${twoDigit(y)} ${an(y)}띠</small><small>오늘 <b>${n}</b>점 · ${gl(n)}</small></div>`;
+      $('quote').innerHTML = `<div class="gh-trio">${side(ya, today.mine)}
+          <div class="gh-mid">${mark ? `<span class="gh-mark">${mark}</span>` : ''}<span class="gh-score">${today.score}</span><small>오늘의 궁합 · ${gl(today.score)}</small></div>
+          ${side(yb, today.yours)}</div>${esc(today.line || g.t)}`;
+      $('meta').innerHTML = `${dateLabel} · ${dayPillar(day)[0]}일 <span style="font-family:var(--serif)">${dayPillar(day)[1]}</span>`;
       document.title = `${dateLabel} ${label(ya)} × ${label(yb)} 오늘의 궁합 · 나풀이`;
+    } else {
+      $('quote').innerHTML = `<span class="gh-pair">${bh(ya)}<small>${mark}</small>${bh(yb)}</span>${esc(g.t)}`;
     }
     // 오행 흐름(년간 오행)
     const things = ['나무', '불', '흙', '쇠', '물'], el = (y) => Math.floor(((y - 4) % 10 + 10) % 10 / 2);
@@ -675,19 +746,30 @@
     else if ((eb + 1) % 5 === ea) flow = [`${E[eb]}생${E[ea]}`, fill(gen[eb], false)];
     else if ((ea + 2) % 5 === eb) flow = [`${E[ea]}극${E[eb]}`, fill(ctl[ea], true) + ' 서로 다잡아 주는 사이예요.'];
     else flow = [`${E[eb]}극${E[ea]}`, fill(ctl[eb], false) + ' 서로 다잡아 주는 사이예요.'];
-    const [tg, th, tc] = today ? grade(today.score) : [];
-    // 오늘의 궁합이 있으면 위에 오늘 점수 카드, 기본 궁합은 제목(늘 같은 두 사람의 결)을 붙여 아래로
-    const todayCard = today ? `<div class="card">
-        <div class="score-row" style="margin-top:0"><span class="score-xl">${today.score}</span><span class="unit">점</span><span class="spacer"></span><span class="pill" style="background:${tc}">${th} ${tg}</span></div>
-        <div class="caption" style="margin-top:8px">${dateLabel} 오늘의 궁합 · 그날 두 사람의 운세와 일진으로 바뀌어요</div>
+    // 오늘의 궁합이 있으면 위에 '오늘의 우리'(앱과 같은 순서: 할 것/피할 것 · 오늘의 행운, 점수는 하늘에), 기본 궁합은 제목을 붙여 아래로
+    const lucky = today ? gunghapLucky(ya, yb) : null;
+    const tile = (label, value) => `<div class="gh-tile"><span>${label}</span><b>${esc(value)}</b></div>`;
+    const todayCard = today ? `<div class="card gh-today">
+        <div class="gh-today-head"><b>오늘의 우리</b></div>
+        <div class="caption" style="margin-top:4px">${dateLabel} 오늘의 궁합 · 그날 두 사람의 운세와 일진으로 바뀌어요</div>
+        ${today.guide ? `<hr class="rule" style="margin-top:18px">
+          <div class="gh-do"><i style="background:var(--health)"></i><div><span>함께하면 좋은 것</span><b>${esc(today.guide.good)}</b></div></div>
+          <div class="gh-do"><i style="background:var(--gold-fill)"></i><div><span>피하면 좋은 것</span><b>${esc(today.guide.avoid)}</b></div></div>` : ''}
+        <hr class="rule" style="margin-top:22px">
+        <div class="gh-lucky-head">오늘의 행운</div>
+        <p class="gh-lucky-why">✦ ${esc(lucky.reason)}</p>
+        <div class="gh-tiles">${tile('이어 주는 기운', `${lucky.element} 기운`)}${tile('색', lucky.color)}${tile('방위', lucky.direction)}${tile('음식', lucky.food)}</div>
       </div>
       <h2>기본 궁합</h2>` : '';
+    const hours = goodHours(ya, yb);
     $('main').innerHTML = `${todayCard}<div class="card">
         ${today ? `<p class="gh-title">${esc(g.t)}</p>` : ''}
         <div class="score-row" style="margin-top:0"><span class="score-xl">${g.s}</span><span class="unit">점</span><span class="spacer"></span><span class="caption">기본 궁합</span></div>
         <div class="gh-kv"><b>잘 맞는 점</b><span>${esc(g.g)}</span></div>
         <div class="gh-kv"><b>${g.s < 60 ? '이렇게 하면' : '조심할 점'}</b><span>${esc(g.c)}</span></div>
         <div class="gh-tags">${tags.map(([h, r]) => `<span class="${good(r) ? 'good' : ''}"><i>${h}</i> ${r}</span>`).join('')}</div>
+        ${hours.list.length ? `<div class="gh-hours"><span>잘 맞는 시간</span><b>${hours.list.join('  ·  ')}</b>
+          <small>${hours.both ? '두 띠와 모두 합이 되는 시간이에요.' : '한쪽 띠와 합이 되고, 두 띠 모두와 충·형·해가 없는 시간이에요.'}</small></div>` : ''}
       </div>
       <div class="card gh-flow"><b>${flow[0]}</b><span>${esc(flow[1])}</span></div>
       <p class="gh-note">나풀이 앱에서는 두 사람의 <b>오늘의 궁합</b>을 매일 볼 수 있어요.</p>
