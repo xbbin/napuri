@@ -274,7 +274,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261103102317'; // 배포할 때마다 바뀐다
+  const BUILD = '20261103104828'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -727,7 +727,7 @@
       const an = (y) => ANIMALS[((y - 4) % 12 + 12) % 12], gl = (n) => grade(n)[0];
       const side = (y, n) => `<div class="gh-side"><span class="gh-glyph">${bh(y)}</span><small>${twoDigit(y)} ${an(y)}띠</small><small>오늘 <b>${n}</b>점 · ${gl(n)}</small></div>`;
       $('quote').innerHTML = `<div class="gh-trio">${side(ya, today.mine)}
-          <div class="gh-mid">${mark ? `<span class="gh-mark">${mark}</span>` : ''}<span class="gh-score">${today.score}</span><small>오늘의 궁합 · ${gl(today.score)}</small></div>
+          <div class="gh-mid">${mark ? `<span class="gh-mark">${mark}</span>` : ''}<span class="gh-score">${today.score}</span><small>오늘의 궁합<br>${gl(today.score)}</small></div>
           ${side(yb, today.yours)}</div>${esc(today.line || g.t)}`;
       $('meta').innerHTML = `${dateLabel} · ${dayPillar(day)[0]}일 <span style="font-family:var(--serif)">${dayPillar(day)[1]}</span>`;
       document.title = `${dateLabel} ${label(ya)} × ${label(yb)} 오늘의 궁합 · 나풀이`;
