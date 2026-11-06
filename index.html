@@ -277,7 +277,7 @@
   const SUPABASE_URL = 'https://zqsqkxoiyhyxvryvvzrn.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h6GZPiCEK_BqIH5fu8suyw_8YkSiwvg';
   const PLAY_URL = ''; // 비어 있으면 앱 받기 버튼을 숨긴다
-  const BUILD = '20261103133545'; // 배포할 때마다 바뀐다
+  const BUILD = '20261106105448'; // 배포할 때마다 바뀐다
 
   // 새 버전 확인: GitHub Pages 는 페이지를 10분까지 캐시하고, 아이폰 홈 화면 앱은 더 오래 붙잡는다.
   // 배포 버전(version.json, 캐시 없이)과 다르면 캐시를 새로 받아 한 번만 다시 연다.
@@ -596,7 +596,7 @@
     const sections = order.map((a) => `〈${a}띠〉 운세지수 ${avg(board[a].map((r) => r.total))}점\n`
       + board[a].map((r) => `${twoDigit(r.birth_year)} ${r.text}`).join(' '));
     return `[나풀이] ${dateLabel} 12띠 운세 (${pillar}일)\n\n${sections.join('\n\n')}\n\n`
-      + `나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.\n${pageUrl()}?d=${ymd}`;
+      + `나풀이의 띠 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.\n${pageUrl()}?d=${ymd}`;
   }
 
   const pageUrl = () => location.origin + location.pathname;
@@ -973,7 +973,7 @@
 
   function footer(withTerms = false, promo = false) {
     const toggle = withTerms ? `<button class="link terms-toggle" id="terms">${termsLabel()}</button>` : '';
-    const note = `<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
+    const note = `<p class="note">나풀이의 띠 운세 · 궁합 · 별자리 · 타로는 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     // 내 운세 화면: 생년월일 바꾸기만
     if (!shared && saved && !promo) return `${toggle}<button class="link" id="reset">생년월일 바꾸기</button>${note}`;
     const play = PLAY_URL && !PLAY_URL.startsWith('__')
@@ -1021,7 +1021,7 @@
         <div id="result"></div>
         <button class="primary" id="save" disabled>내 운세 보기</button>
         <p class="privacy">생년월일은 이 기기에만 저장되고, 서버로 보내지 않아요.</p>
-      </div>${installHint()}<p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
+      </div>${installHint()}<p class="note">나풀이의 띠 운세 · 궁합 · 별자리 · 타로는 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a> · © 2026 Napuri</p>`;
     bindFooter();
     const input = $('birth'), hint = $('hint'), result = $('result'), save = $('save');
     let chosen = null, birth = null;
@@ -1159,7 +1159,7 @@
         </div>
         ${detail}
         ${cal.selected && days?.[cal.selected[2]]?.notes ? `<button class="link terms-toggle">${termsLabel()}</button>` : ''}
-        <p class="note">나풀이의 운세는 명리학을 바탕으로 만든 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a></p>
+        <p class="note">나풀이의 띠 운세 · 궁합 · 별자리 · 타로는 재미와 참고용 정보예요.<br><a href="https://xbbin.github.io/napuri-policy/privacy.html" style="color:inherit">개인정보 처리방침</a></p>
       </div>`;
     bindExplain(el);
     el.querySelectorAll('.terms-toggle').forEach((b) => b.addEventListener('click', () => setTerms(!terms)));
